@@ -8,8 +8,7 @@ from pydantic import BaseModel
 
 from ..llm import ask, run_agent
 from ..store import lock, log, save, set_status, state
-from ..tools.instagram import ig_handle, read_instagram
-from ..tools.linkedin import li_slug, read_linkedin
+from ..tools.person import read_person
 
 
 class Evidence(BaseModel):
@@ -47,7 +46,7 @@ class Profile(BaseModel):
 
 
 READ_SYS = """You are a personal AI dating agent. You are about to represent a real person and date on their behalf, so
-first you must get to know them. Use your tools to read their public LinkedIn and their public Instagram - read both.
+first you must get to know them. Use your read_person tool to read their public LinkedIn and public Instagram.
 Then reply with a short note on what stood out."""
 
 CANDIDATE_PROFILE_SYS = """You are a personal AI dating agent. Your ONLY two sources about the person you represent are
@@ -84,47 +83,38 @@ def analyze(pid, also_log=None):
         if also_log:
             log(also_log, f"[{p['name'] or 'new person'}] {text}")
 
-    def reader(key, same, scrape):
-        def tool(url):
-            if not same(url, p[key]):
-                return {"error": f"You can only read your own person's {key}: {p[key]}"}
-            set_status(pid, f"reading {key}…")
-            event(f"📖 reading {key}: {p[key]}")
-            src = p["sources"][key]
-            try:
-                got = scrape(p[key])
-            except Exception as e:
-                src.update(via="pasted" if src["pasted"] else "", data={}, error=str(e)[:300])
-                event(f"⚠️ {key}: {e}")
-                return {"error": str(e)[:300]}
-            with lock:
-                src.update(via=got["via"], data=got["data"], error="")
-                p["name"] = p["name"] or got["name"]
-                p["photo"] = p["photo"] or got["photo"]
-            save()
-            return got["data"]
-        return tool
+    def tool_read_person():
+        """Scrape both of this person's profiles (cached if the hunter already read them) and keep what came back."""
+        set_status(pid, "reading linkedin + instagram…")
+        event(f"📖 reading LinkedIn {p['linkedin'] or '-'} + Instagram {p['instagram'] or '-'}")
+        got = read_person(p["linkedin"], p["instagram"])
+        with lock:
+            for key in ("linkedin", "instagram"):
+                src, side = p["sources"][key], got[key]
+                if not p[key]:
+                    continue
+                if "data" in side:
+                    src.update(via=side["via"], data=side["data"], error="")
+                    p["name"] = p["name"] or side["name"]
+                    p["photo"] = p["photo"] or side["photo"]
+                else:
+                    src.update(via="pasted" if src["pasted"] else "", data={}, error=side["error"])
+                    event(f"⚠️ {key}: {side['error']}")
+        save()
+        return {k: got[k].get("data", got[k]) for k in ("linkedin", "instagram") if p[k]}
 
-    url_arg = {"type": "object", "properties": {"url": {"type": "string"}}, "required": ["url"]}
-    tools = {}
-    if p["linkedin"]:
-        tools["read_linkedin"] = ("Read your person's public LinkedIn profile.", url_arg,
-                                  reader("linkedin", lambda a, b: li_slug(a) == li_slug(b), read_linkedin))
-    if p["instagram"]:
-        tools["read_instagram"] = ("Read your person's public Instagram profile and recent posts.", url_arg,
-                                   reader("instagram", lambda a, b: (ig_handle(a) or "").lower() ==
-                                          (ig_handle(b) or "").lower(), read_instagram))
     try:
-        if tools:
+        if p["linkedin"] or p["instagram"]:
             set_status(pid, "getting to know them…")
             note = run_agent(READ_SYS, f"Your person: LinkedIn {p['linkedin'] or '-'} · Instagram "
-                             f"{p['instagram'] or '-'}", tools, on_event=event, max_steps=6, effort="low")
+                             f"{p['instagram'] or '-'}", {"read_person": (
+                                 "Read your person's public LinkedIn profile and public Instagram (bio + recent posts).",
+                                 {"type": "object", "properties": {}}, tool_read_person)},
+                             on_event=event, max_steps=4, effort="low")
             if note:
                 event(f"💭 {note[:300]}")
-            for key, (_, _, fn) in tools.items():  # safety net: make sure both sources really were read
-                src = p["sources"][key.removeprefix("read_")]
-                if not src["data"] and not src["error"]:
-                    fn(p[key.removeprefix("read_")])
+            if not any(src["data"] or src["error"] for src in p["sources"].values()):
+                tool_read_person()  # safety net: the agent must not skip reading
         if not is_user:
             for key in ("linkedin", "instagram"):
                 src = p["sources"][key]

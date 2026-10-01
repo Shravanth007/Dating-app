@@ -331,6 +331,7 @@ details summary{cursor:pointer;color:var(--mute);font-weight:600;font-size:13.5p
   .card{padding:18px}
   .msg{max-width:90%}
 }
+.spend{margin-left:auto;font:600 12px/1 'JetBrains Mono',monospace;color:var(--mute);border:1px solid var(--line);border-radius:99px;padding:6px 10px;white-space:nowrap}.spend.over{color:#ff5c5c;border-color:#ff5c5c}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}.demo .msg{opacity:1}}
 </style>
 </head>
@@ -345,6 +346,7 @@ details summary{cursor:pointer;color:var(--mute);font-weight:600;font-size:13.5p
       <a href="#rank" data-tab="rank"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 20V11M12 20V5M18 20v-6"/></svg>Rankings</a>
       <a href="#add" data-tab="add"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Add</a>
     </nav>
+    <span class="spend" id="spend" title="Model spend so far / spending cap"></span>
   </div>
   <div id="pipe"></div>
 </header>
@@ -354,7 +356,7 @@ details summary{cursor:pointer;color:var(--mute);font-weight:600;font-size:13.5p
 'use strict';
 /* ================= state ================= */
 let S = {people: {}, dates: {}, rankings: {}, pipeline: {running: false, step: ''}};
-let loaded = false, lastJSON = '', lastRoute = '', busy = false, enterT, huntCount = 10;
+let loaded = false, lastJSON = '', lastRoute = '', busy = false, enterT, huntCount = 25;
 const seenLog = {}, seenChat = {};
 const LS = {
   get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
@@ -557,6 +559,16 @@ function downscale(file) { return new Promise((res, rej) => { const fr = new Fil
   fr.readAsDataURL(file); }); }
 
 /* ================= views ================= */
+function realDemo() { // the most recent real date, never a scripted one
+  const d = Object.values(S.dates).filter(d => d.transcript && d.transcript.length).pop();
+  if (!d) return '';
+  const A = P(d.a), Bp = P(d.b), lines = d.transcript.slice(-4);
+  return `<a class="demo" href="#d/${enc(d.id)}" style="text-decoration:none;color:inherit"><div class="row"><span class="pair">${av(A)}${av(Bp)}</span><b>${esc(first(A))}'s agent &amp; ${esc(first(Bp))}'s agent</b></div>
+    <div class="venue"><i class="dot" style="color:var(--acc)"></i>${isWork(d.status) ? 'Live' : 'Latest date'}${d.venue ? ' · ' + esc(d.venue) : ''}</div>
+    <div class="chat" style="max-height:none;overflow:visible">${lines.map((t, i) => `<div class="msg ${t.who === d.a ? 'l' : 'r'} m${i + 1}"><div class="bub"><small>${esc(first(P(t.who)))}'s agent</small>${esc(t.text)}</div></div>`).join('')}
+    ${d.status === 'on the date' ? '<div class="msg l typing m5"><div class="bub"><i></i><i></i><i></i></div></div>' : ''}</div></a>`;
+}
+
 const views = {
   welcome() { const us = users();
     return B('hero', `<div class="hero"><div>
@@ -566,14 +578,7 @@ const views = {
       <div class="sub"><a href="#pool">Browse the pool</a><a href="#add">Add someone by link</a></div>
       ${us.length ? `<div style="margin-top:34px"><div class="small mute" style="font-weight:600">Continue as</div><div class="users">${us.map(u => `<a href="#me" data-act="switch" data-id="${esc(u.id)}">${av(u, 'sm')}${esc(nm(u))}</a>`).join('')}</div></div>` : ''}
     </div>
-    <div class="demo" aria-hidden="true"><div class="row"><span class="pair">${av({id: 'maya', name: 'Maya Chen'})}${av({id: 'jon', name: 'Jonah Reyes'})}</span><b>Maya's agent &amp; Jonah's agent</b></div>
-      <div class="venue"><i class="dot" style="color:var(--acc)"></i>Live at a natural wine bar in Fort Greene</div>
-      <div class="chat" style="max-height:none;overflow:visible">
-        <div class="msg l m1"><div class="bub"><small>Maya's agent</small>She'd skip the bar crawl for a 6am climb, honestly.</div></div>
-        <div class="msg r m2"><div class="bub"><small>Jonah's agent</small><em>laughs</em> He posts a sunrise from a crag every other week. Bouldering or ropes?</div></div>
-        <div class="msg l m3"><div class="bub"><small>Maya's agent</small>Ropes. And she will ask what he's reading before what he does.</div></div>
-        <div class="msg r m4"><div class="bub"><small>Jonah's agent</small>Then they'll be here a while. Three book recs in his last ten posts.</div></div>
-        <div class="msg l typing m5"><div class="bub"><i></i><i></i><i></i></div></div></div></div></div>`)
+    ${realDemo()}</div>`)
     + B('how', `<div class="how"><div><b>You onboard</b><span>Like any dating app: basics, your type, your dealbreakers.</span></div>
       <div><b>It hunts</b><span>Your agent finds real people from public LinkedIn and Instagram.</span></div>
       <div><b>Agents date</b><span>Each person gets an agent built only from their own public profiles. They meet yours.</span></div>
@@ -592,7 +597,7 @@ const views = {
     + B('hunt', `<div class="card hunt ${run ? 'running' : ''}"><div class="hunt-top"><div class="grow" style="min-width:220px">
         <h2>${run ? 'Your agent is out hunting' : got ? 'Send it out again' : 'Send your agent hunting'}</h2>
         <p class="mute" style="margin-top:6px">${run ? 'It searches the web for real people, reads their public profiles, and builds an agent for each one.' : f ? 'It finds real people who fit you, then dates their agents on your behalf.' : 'Your agent is still getting to know you. Hunting unlocks when it is ready.'}</p></div>
-        <div class="row"><div class="seg" role="radiogroup" aria-label="How many people">${[5, 10, 15].map(n => `<button type="button" role="radio" aria-checked="${huntCount === n}" class="${huntCount === n ? 'on' : ''}" data-act="hcount" data-n="${n}" ${run ? 'disabled' : ''}>${n}</button>`).join('')}</div>
+        <div class="row"><div class="seg" role="radiogroup" aria-label="How many people">${[10, 25, 40].map(n => `<button type="button" role="radio" aria-checked="${huntCount === n}" class="${huntCount === n ? 'on' : ''}" data-act="hcount" data-n="${n}" ${run ? 'disabled' : ''}>${n}</button>`).join('')}</div>
         <button class="primary lg" data-act="hunt" ${canHunt ? '' : 'disabled'}>${run ? '<span class="spin"></span>Hunting' : 'Send my agent hunting'}</button></div></div>
         ${run || h?.step ? `<div class="hprog">${run ? '<i class="dot"></i>' : ''}<span>${esc(h?.step || 'Starting')}</span>${tgt ? `<span class="t"><i style="width:${Math.min(100, got / tgt * 100).toFixed(0)}%"></i></span><span>${got} of ${tgt}</span>` : ''}</div>` : ''}
         ${logFeed(p, fresh)}</div>`)
@@ -728,6 +733,8 @@ function chrome() {
   document.querySelectorAll('nav.tabs a').forEach(a => { const on = a.dataset.tab === tab; a.classList.toggle('on', on); on ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'); });
   const meA = $('nav.tabs a[data-tab=me]'); if (meA) meA.setAttribute('href', ME ? '#me' : '#welcome');
   const live = Object.values(S.dates).filter(d => isWork(d.status)).length, working = people().filter(p => isWork(p.status) || p.hunt?.running).length;
+  const sp = $('#spend'), money = S.spend || {};
+  if (sp) { sp.textContent = `$${(+money.usd || 0).toFixed(2)} / $${(+money.budget || 0).toFixed(0)}`; sp.classList.toggle('over', (+money.usd || 0) >= (+money.budget || 1e9)); }
   const nd = $('#n-dates'), np = $('#n-pool');
   if (nd) { nd.hidden = !live; nd.textContent = live; }
   if (np) { np.hidden = !working; np.textContent = working; np.style.background = 'var(--amb)'; np.style.color = '#000'; }
@@ -790,7 +797,7 @@ if (typeof document !== 'undefined' && document.getElementById('app')) {
       case 'obgo': obErr = ''; obStep = +a.i || 0; obRender('back'); return scrollTo(0, 0);
       case 'switch': e.preventDefault(); setMe(a.id); location.hash = 'me'; lastRoute = ''; return render(true);
       case 'newagent': ob = blankOb(); obStep = 0; obErr = ''; LS.set('ph_draft', null); return;
-      case 'hcount': huntCount = +a.n || 10; return render(true);
+      case 'hcount': huntCount = +a.n || 25; return render(true);
     }
     if (t.tagName === 'BUTTON') { if (t.disabled) return; t.disabled = true; setTimeout(() => { t.disabled = false; }, 1500); }
     switch (a.act) {

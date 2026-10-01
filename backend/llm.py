@@ -2,11 +2,17 @@
 
 - ask():       one question → text, or JSON validated against a pydantic schema
 - run_agent(): a real tool-using agent loop: the model decides which tool to call, we run it, feed the result back,
-               until the model stops calling tools (or runs out of steps)."""
+               until the model stops calling tools (or hits its step limit)
+Every call's cost is added to state["spend"]; once it reaches BUDGET_USD no further call is made."""
 import json, re, time, urllib.error
 
-from .config import MODEL, OPENROUTER_API_KEY
+from .config import BUDGET_USD, KEEP_TOOL_RESULTS, MODEL, OPENROUTER_API_KEY, TOOL_RESULT_CHARS
+from .store import lock, save, state
 from .tools.fetch import http
+
+
+class BudgetExceeded(RuntimeError):
+    pass
 
 
 def strict(schema):
@@ -23,18 +29,21 @@ def strict(schema):
     return schema
 
 
-def chat(messages, tools=None, schema=None, web=False, effort="low", max_tokens=8000):
+def chat(messages, tools=None, schema=None, web=False, effort="low", max_tokens=8000, model=None):
     """One OpenRouter call with retries. Returns the assistant message dict (content, tool_calls, …)."""
     if not OPENROUTER_API_KEY:
         raise RuntimeError("OPENROUTER_API_KEY is not set")
-    body = {"model": MODEL, "messages": messages, "max_tokens": max_tokens, "reasoning": {"effort": effort}}
+    if state["spend"]["usd"] >= BUDGET_USD:
+        raise BudgetExceeded(f"Spending cap reached (${BUDGET_USD:.2f}). Raise BUDGET_USD to continue.")
+    body = {"model": model or MODEL, "messages": messages, "max_tokens": max_tokens,
+            "reasoning": {"effort": effort}, "usage": {"include": True}}
     if tools:
         body["tools"] = tools
     if schema:
         body["response_format"] = {"type": "json_schema", "json_schema": {
             "name": schema.__name__, "strict": True, "schema": strict(schema.model_json_schema())}}
     if web:  # OpenRouter's web search plugin (uses the model's native search for Anthropic models)
-        body["plugins"] = [{"id": "web", "max_results": 10}]
+        body["plugins"] = [{"id": "web", "max_results": 8}]
     err = None
     for attempt in range(4):
         try:
@@ -43,6 +52,10 @@ def chat(messages, tools=None, schema=None, web=False, effort="low", max_tokens=
                 "X-Title": "Proxy Hearts"}))
             if "error" in r:
                 raise RuntimeError(r["error"].get("message", r["error"]))
+            with lock:
+                state["spend"]["usd"] = round(state["spend"]["usd"] + float((r.get("usage") or {}).get("cost") or 0), 4)
+                state["spend"]["calls"] += 1
+            save()
             return r["choices"][0]["message"]
         except urllib.error.HTTPError as e:
             err = RuntimeError(f"OpenRouter {e.code}: {e.read().decode()[:300]}")
@@ -68,14 +81,14 @@ def ask(system, user, schema=None, **kw):
                 raise
 
 
-def run_agent(system, task, tools, on_event=print, max_steps=20, effort="medium"):
+def run_agent(system, task, tools, on_event=print, max_steps=20, effort="medium", model=None):
     """tools: {name: (description, json_schema_of_args, python_function)}.
-    Returns the agent's final text. Every tool call and its outcome is reported through on_event(text)."""
+    The agent stops when it answers without calling a tool, calls `finish`, or hits max_steps. Returns its last text."""
     specs = [{"type": "function", "function": {"name": n, "description": d, "parameters": p}}
              for n, (d, p, _) in tools.items()]
     messages = [{"role": "system", "content": system}, {"role": "user", "content": task}]
     for _ in range(max_steps):
-        msg = chat(messages, tools=specs, effort=effort, max_tokens=8000)
+        msg = chat(messages, tools=specs, effort=effort, max_tokens=8000, model=model)
         messages.append({k: v for k, v in msg.items() if v is not None and k != "refusal"})
         if msg.get("content") and msg.get("tool_calls"):
             on_event(f"💭 {msg['content'].strip()[:300]}")
@@ -86,10 +99,18 @@ def run_agent(system, task, tools, on_event=print, max_steps=20, effort="medium"
             try:
                 args = json.loads(call["function"].get("arguments") or "{}")
                 result = tools[name][2](**args)
+            except BudgetExceeded:
+                raise
             except Exception as e:  # tell the agent what went wrong; it can adapt
                 result = {"error": str(e)[:300]}
             messages.append({"role": "tool", "tool_call_id": call["id"],
-                             "content": json.dumps(result, ensure_ascii=False)[:12000]})
+                             "content": json.dumps(result, ensure_ascii=False)[:TOOL_RESULT_CHARS]})
+        # keep long loops cheap: older tool results shrink to a stub (the agent already acted on them)
+        tool_msgs = [m for m in messages if m["role"] == "tool"]
+        for m in tool_msgs[:-KEEP_TOOL_RESULTS]:
+            if len(m["content"]) > 400:
+                m["content"] = m["content"][:400] + " …(older result trimmed)"
         if any(c["function"]["name"] == "finish" for c in msg["tool_calls"]):
             return ""
+    on_event("⏱️ step limit reached")
     return ""

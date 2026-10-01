@@ -16,7 +16,7 @@ from .agents.dater import run_date, start_date
 from .agents.hunter import hunt
 from .agents.matcher import ranking, search
 from .agents.reader import analyze
-from .config import FRONTEND, PORT
+from .config import FRONTEND, HUNT_MAX, HUNT_TARGET, PORT
 from .pipeline import run_everyone
 from .store import lock, new_person, pool, save, state
 from .tools.instagram import ig_handle, read_instagram
@@ -111,7 +111,7 @@ class Handler(BaseHTTPRequestHandler):
                 if (u.get("hunt") or {}).get("running"):
                     raise ValueError("Your agent is already hunting")
                 u["hunt"] = {"running": True, "step": "starting", "found": 0, "target": 0}
-                pool.submit(hunt, u["id"], max(1, min(25, int(body.get("count") or 10))))
+                pool.submit(hunt, u["id"], max(1, min(HUNT_MAX, int(body.get("count") or HUNT_TARGET))))
                 return self.send(200, {})
             if path == "/api/people":
                 return self.send(200, {"ids": [add_by_link(x) for x in body["people"][:100]]})

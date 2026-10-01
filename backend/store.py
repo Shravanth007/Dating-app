@@ -2,12 +2,14 @@
 import json, threading, time, uuid
 from concurrent.futures import ThreadPoolExecutor
 
-from .config import DATA_FILE
+from .config import BUDGET_USD, DATA_FILE, WORKERS
 
-lock = threading.RLock()          # one lock guards `state` (many agents write at once)
-pool = ThreadPoolExecutor(12)     # background workers that run agents
+lock = threading.RLock()              # one lock guards `state` (many agents write at once)
+pool = ThreadPoolExecutor(WORKERS)    # background workers that run agents
 state = json.loads(DATA_FILE.read_text("utf8")) if DATA_FILE.exists() else {}
 state.setdefault("people", {}), state.setdefault("dates", {})
+state.setdefault("spend", {"usd": 0.0, "calls": 0})
+state["spend"]["budget"] = BUDGET_USD
 state["pipeline"] = {"running": False, "step": ""}
 
 
