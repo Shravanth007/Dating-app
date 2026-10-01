@@ -2,3 +2,8 @@ __pycache__/
 .claude/
 .env
 .env.txt
+
+# personal data: scraped profiles, the run, the demo person — stays on this machine
+data/demo.json
+data/scrape_cache.json
+data/demo_person.json
