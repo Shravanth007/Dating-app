@@ -85,7 +85,8 @@ Proxy Hearts/
 │       └── fetch.py          ← shared HTTP helpers
 │
 ├── data/
-│   ├── demo.json             ← the finished demo run (created when you use the app)
+│   ├── demo.json             ← your run (people, dates, rankings): stays on your machine, git-ignored
+│   ├── scrape_cache.json     ← every profile scraped, saved once: git-ignored
 │   └── seed_people.txt       ← real people (LinkedIn + Instagram) you can bulk-add to the pool
 │
 ├── tests/test_core.py
