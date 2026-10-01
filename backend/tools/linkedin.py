@@ -39,7 +39,7 @@ def read_linkedin(url):
         except urllib.error.HTTPError as e:
             err = e
             if e.code == 404:
-                raise ValueError("LinkedIn profile not found")
+                raise ValueError("LinkedIn profile is not public (hidden from logged-out visitors) or the URL is wrong")
         time.sleep(attempt)
     if not page and err:
         raise ValueError(f"LinkedIn blocked the request (HTTP {err.code})")
