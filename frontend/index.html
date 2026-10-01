@@ -535,7 +535,7 @@ const OB = [
 ];
 function obBody() { const st = OB[obStep], n = OB.length, lastS = obStep === n - 1;
   return `<div class="wiz"><div class="prog"><i style="width:${((obStep + 1) / n * 100).toFixed(1)}%"></i></div>
-    <div class="count"><span>Step ${obStep + 1} of ${n}</span>${obStep ? '' : '<a class="mute" href="#welcome" style="text-decoration:none">Cancel</a>'}</div>
+    <div class="count"><span>Step ${obStep + 1} of ${n}</span>${obStep ? '' : `<span class="row" style="gap:14px">${S.demo_person ? '<a class="mute" href="#onboard" data-act="demoperson" style="text-decoration:none">Use demo person</a>' : ''}<a class="mute" href="#welcome" style="text-decoration:none">Cancel</a></span>`}</div>
     <div class="body ${obDir}"><h2>${st.t}</h2><p class="why">${st.w}</p>${st.b()}</div>
     <div class="err" id="ob-err" role="alert">${esc(obErr)}</div>
     <div class="foot">${obStep ? '<button type="button" class="ghost" data-act="obback">Back</button>' : '<span></span>'}
@@ -734,7 +734,7 @@ function chrome() {
   const meA = $('nav.tabs a[data-tab=me]'); if (meA) meA.setAttribute('href', ME ? '#me' : '#welcome');
   const live = Object.values(S.dates).filter(d => isWork(d.status)).length, working = people().filter(p => isWork(p.status) || p.hunt?.running).length;
   const sp = $('#spend'), money = S.spend || {};
-  if (sp) { sp.textContent = `$${(+money.usd || 0).toFixed(2)} / $${(+money.budget || 0).toFixed(0)}`; sp.classList.toggle('over', (+money.usd || 0) >= (+money.budget || 1e9)); }
+  if (sp) { sp.textContent = `${+money.calls || 0} model calls · $${(+money.usd || 0).toFixed(2)}`; sp.classList.toggle('over', (+money.usd || 0) >= (+money.budget || 1e9)); }
   const nd = $('#n-dates'), np = $('#n-pool');
   if (nd) { nd.hidden = !live; nd.textContent = live; }
   if (np) { np.hidden = !working; np.textContent = working; np.style.background = 'var(--amb)'; np.style.color = '#000'; }
@@ -796,6 +796,9 @@ if (typeof document !== 'undefined' && document.getElementById('app')) {
       case 'obback': obErr = ''; obStep = Math.max(0, obStep - 1); obRender('back'); return scrollTo(0, 0);
       case 'obgo': obErr = ''; obStep = +a.i || 0; obRender('back'); return scrollTo(0, 0);
       case 'switch': e.preventDefault(); setMe(a.id); location.hash = 'me'; lastRoute = ''; return render(true);
+      case 'demoperson': { const b = blankOb(), d = S.demo_person || {};
+        ob = {...b, ...d, lifestyle: {...b.lifestyle, ...(d.lifestyle || {})}, prompts: {...b.prompts, ...(d.prompts || {})}};
+        obStep = OB.length - 1; obErr = ''; obRender('back'); return scrollTo(0, 0); }
       case 'newagent': ob = blankOb(); obStep = 0; obErr = ''; LS.set('ph_draft', null); return;
       case 'hcount': huntCount = +a.n || 25; return render(true);
     }

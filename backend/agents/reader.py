@@ -1,12 +1,12 @@
 """Agent 1 — the READER: gets to know the person it represents.
 
-A candidate's agent uses its tools to read the person's public LinkedIn + Instagram (its only two sources) and turns
-what it read into a dating profile. A user's agent starts from their onboarding answers (plus their own links, if given)."""
+A candidate's agent gets the person's public LinkedIn + Instagram from the read_person tool (its only two sources) and
+turns what it read into a dating profile with one model call. A user's agent starts from their onboarding answers (plus their own links, if given)."""
 import json
 
 from pydantic import BaseModel
 
-from ..llm import ask, run_agent
+from ..llm import ask
 from ..store import lock, log, save, set_status, state
 from ..tools.person import read_person
 
@@ -44,10 +44,6 @@ class Profile(BaseModel):
     evidence: list[Evidence]
     data_confidence: str
 
-
-READ_SYS = """You are a personal AI dating agent. You are about to represent a real person and date on their behalf, so
-first you must get to know them. Use your read_person tool to read their public LinkedIn and public Instagram.
-Then reply with a short note on what stood out."""
 
 CANDIDATE_PROFILE_SYS = """You are a personal AI dating agent. Your ONLY two sources about the person you represent are
 their public LinkedIn and public Instagram (what your tools returned, below). Use nothing else - no outside or prior
@@ -105,16 +101,7 @@ def analyze(pid, also_log=None):
 
     try:
         if p["linkedin"] or p["instagram"]:
-            set_status(pid, "getting to know them…")
-            note = run_agent(READ_SYS, f"Your person: LinkedIn {p['linkedin'] or '-'} · Instagram "
-                             f"{p['instagram'] or '-'}", {"read_person": (
-                                 "Read your person's public LinkedIn profile and public Instagram (bio + recent posts).",
-                                 {"type": "object", "properties": {}}, tool_read_person)},
-                             on_event=event, max_steps=4, effort="low")
-            if note:
-                event(f"💭 {note[:300]}")
-            if not any(src["data"] or src["error"] for src in p["sources"].values()):
-                tool_read_person()  # safety net: the agent must not skip reading
+            tool_read_person()  # the tool brings the data (cached if the hunter already read them); no model cost
         if not is_user:
             for key in ("linkedin", "instagram"):
                 src = p["sources"][key]

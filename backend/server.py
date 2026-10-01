@@ -16,11 +16,12 @@ from .agents.dater import run_date, start_date
 from .agents.hunter import hunt
 from .agents.matcher import ranking, search
 from .agents.reader import analyze
-from .config import FRONTEND, HUNT_MAX, HUNT_TARGET, PORT
+from .config import FRONTEND, HUNT_MAX, HUNT_TARGET, PORT, ROOT
 from .pipeline import run_everyone
 from .store import lock, new_person, pool, save, state
-from .tools.instagram import ig_handle, read_instagram
-from .tools.linkedin import li_slug, read_linkedin
+from .tools.instagram import ig_handle
+from .tools.linkedin import li_slug
+from .tools.person import read_person
 
 CHOICES = {"gender": ("man", "woman", "nonbinary"), "interested_in": ("men", "women", "everyone")}
 
@@ -91,6 +92,8 @@ class Handler(BaseHTTPRequestHandler):
                 snap = json.loads(json.dumps(state))
             snap["rankings"] = {pid: ranking(pid, snap["people"], snap["dates"])
                                 for pid, p in snap["people"].items() if p.get("profile")}
+            demo = ROOT / "data" / "demo_person.json"  # optional: pre-filled onboarding answers for demos
+            snap["demo_person"] = json.loads(demo.read_text("utf8")) if demo.exists() else None
             return self.send(200, snap)
         if urllib.parse.urlparse(self.path).path in ("/", "/index.html"):
             return self.send(200, FRONTEND.read_bytes(), "text/html; charset=utf-8")
@@ -144,8 +147,7 @@ class Handler(BaseHTTPRequestHandler):
 
 def main():
     if "--scrape" in sys.argv:  # debug: python -m backend --scrape <linkedin_url> <instagram_url>
-        print(json.dumps({"linkedin": read_linkedin(sys.argv[2]), "instagram": read_instagram(sys.argv[3])},
-                         indent=1, ensure_ascii=False))
+        print(json.dumps(read_person(sys.argv[2], sys.argv[3]), indent=1, ensure_ascii=False))
         return
     for p in state["people"].values():  # resume work interrupted by a restart
         if p["status"] != "ready" and not p["status"].startswith("error"):

@@ -4,7 +4,7 @@ Tier 1: Apify actor harvestapi/linkedin-profile-scraper (no cookies) when APIFY_
 Tier 2 (free): LinkedIn's public guest page embeds a schema.org Person graph (headline, location, about, experience,
 education, languages) plus the person's recent posts and articles. Browsers get rate-limited (HTTP 999) quickly;
 link-preview crawlers are still served the public page, so we rotate through them."""
-import json, re, time, urllib.error
+import html, json, re, time, urllib.error
 
 from .fetch import CHROME, apify, http, meta_tags, trim
 
@@ -75,4 +75,44 @@ def read_linkedin(url):
         "articles": [n.get("headline") for n in nodes if n.get("@type") == "Article"],
         "summary_line": m.get("description", ""),
     }
+    data["profile_sections"] = visible_sections(page)  # the rendered page adds job titles, full about, languages…
     return {"via": "builtin", "name": person.get("name", ""), "photo": m.get("og:image", ""), "data": trim(data)}
+
+
+def _text(h):
+    return re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", h or ""))).strip()
+
+
+A = r'(?:"[^"]*"|[^>"])*'  # the attributes of a tag (class names here can contain ">")
+
+
+def visible_sections(page):
+    """Parse the public page's rendered sections: about, experience (title, company, dates, location, description),
+    education, volunteering, certifications, projects, languages, awards, websites… whatever this person shows."""
+    out = {}
+    starts = [(m.start(), m.group(1)) for m in re.finditer(r'<section[^>]*data-section="([\w-]+)"', page)]
+    for i, (pos, name) in enumerate(starts):
+        if name in ("posts", "articles", "picture"):
+            continue  # posts/articles already come from the embedded JSON
+        body = page[pos:starts[i + 1][0] if i + 1 < len(starts) else len(page)]
+        body = body.split('<section class="aside-section', 1)[0]  # stop before "people also viewed"
+        items = []
+        for li in re.findall(r'<li class="profile-section-card.*?</li>\s*(?=<li class="profile-section-card|</ul>)',
+                             body, re.S):
+            pick = lambda pat: _text((re.search(pat.replace("[^>]*", A), li, re.S) or [None, ""])[1]).strip(" -")
+            item = {"title": pick(r"<h3[^>]*>(.*?)</h3>"), "subtitle": pick(r"<h4[^>]*>(.*?)</h4>"),
+                    "dates": pick(r'<span class="date-range[^"]*"[^>]*>(.*?)</span>'),
+                    "location": pick(r'<p class="experience-item__meta-item"[^>]*>(?:(?!date-range).)*?</p>\s*'
+                                     r'<p class="experience-item__meta-item"[^>]*>(.*?)</p>'),
+                    "description": pick(r'class="show-more-less-text__text--(?:less|more)"[^>]*>(.*?)</p>')}
+            item = {k: v for k, v in item.items() if v}
+            if item:
+                items.append(item)
+        if items:
+            out[{"currentPositionsDetails": "current_positions", "educationsDetails": "education_details"}
+                .get(name, name.replace("-", "_"))] = items
+        elif name in ("summary", "about"):
+            out["about_full"] = _text(re.sub(r"<h2.*?</h2>", "", re.sub(r"^<section" + A + ">", "", body), flags=re.S))[:3000]
+        elif name == "websites":
+            out["websites"] = [_text(a) for a in re.findall(r"<a[^>]*>(.*?)</a>", body, re.S) if _text(a)][:10]
+    return out
