@@ -23,12 +23,19 @@ def read_linkedin(url):
     try:
         item = apify("harvestapi~linkedin-profile-scraper",
                      {"profileScraperMode": "Profile details no email ($4 per 1k)", "queries": [url]})
+        if item and (item.get("error") or item.get("status") in (404, 410)):
+            raise LookupError(item.get("error") or "Profile not found")  # Apify answered with an error, not a profile
         if item:
             name = item.get("fullName") or " ".join(filter(None, (item.get("firstName"), item.get("lastName"))))
             photo = item.get("photo") or item.get("profilePicture") or ""
+            for noise in ("moreProfiles", "originalQuery", "composeOptionType", "profileLocales", "primaryLocale",
+                          "multiLocaleHeadline", "sectionTotals", "memorialized"):
+                item.pop(noise, None)  # moreProfiles = OTHER people ("people also viewed"): never feed them to this agent
             return {"via": "apify", "name": name, "photo": photo if isinstance(photo, str) else "", "data": trim(item)}
+    except LookupError:
+        raise ValueError("LinkedIn profile not found (Apify): the URL is wrong or the profile is not public")
     except Exception:
-        pass  # fall through to the built-in scraper
+        pass  # Apify unavailable → fall through to the built-in scraper
 
     page, err = "", None
     for attempt, ua in enumerate([CHROME, "facebookexternalhit/1.1", "Twitterbot/1.0", "facebookexternalhit/1.1"]):
