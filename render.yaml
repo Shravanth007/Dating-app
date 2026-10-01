@@ -3,7 +3,7 @@ services:
     name: proxy-hearts
     runtime: python
     buildCommand: pip install -r requirements.txt
-    startCommand: python -m app
+    startCommand: python -m backend
     envVars:
       - key: OPENROUTER_API_KEY
         sync: false
