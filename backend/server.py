@@ -19,9 +19,9 @@ from .agents.dater import SLOTS, chat, plan_first_date, run_date, start_date
 from .agents.hunter import hunt
 from .agents.matcher import ranking, search
 from .agents.reader import analyze
-from .config import FRONTEND, HUNT_MAX, HUNT_TARGET, PORT, ROOT
+from .config import FRONTEND, HUNT_MAX, HUNT_TARGET, LIMITS, PORT, ROOT
 from .pipeline import run_everyone
-from .store import lock, new_person, pool, reload, save, state
+from .store import allow, lock, new_person, pool, reload, save, state
 from .tools.instagram import ig_handle
 from .tools.linkedin import li_slug
 from .tools.person import read_person
@@ -121,6 +121,11 @@ class Handler(BaseHTTPRequestHandler):
         try:
             body = json.loads(self.rfile.read(int(self.headers.get("Content-Length") or 0)) or b"{}")
             path = self.path
+            action = next((a for a in LIMITS if f"/{a}" in path.replace("/api/onboard", "/onboard")), None)
+            ip = (self.headers.get("X-Forwarded-For") or getattr(self, "client_address", ("local",))[0]).split(",")[0]
+            if action and not allow(f"{ip}:{action}", LIMITS[action]):
+                return self.send(429, {"error": "You've hit today's limit for this action on the public demo. "
+                                                "Please try again tomorrow."})
             if path == "/api/onboard":
                 return self.send(200, {"id": onboard(body.get("answers") or {})})
             if m := re.fullmatch(r"/api/users/(\w+)/hunt", path):
@@ -183,8 +188,9 @@ class Handler(BaseHTTPRequestHandler):
 
 class _Request:
     """Lets a WSGI server (Vercel) reuse Handler's routes: same attributes, response captured instead of written."""
-    def __init__(self, path, body):
-        self.path, self.headers, self.rfile, self.out = path, {"Content-Length": str(len(body))}, io.BytesIO(body), None
+    def __init__(self, path, body, ip=""):
+        self.path, self.rfile, self.out = path, io.BytesIO(body), None
+        self.headers = {"Content-Length": str(len(body)), "X-Forwarded-For": ip}
 
     def send(self, code, body, ctype="application/json"):
         self.out = (code, body if isinstance(body, bytes) else json.dumps(body).encode(), ctype)
@@ -197,7 +203,7 @@ def app(environ, start_response):
         path += "?" + environ["QUERY_STRING"]
     post = environ.get("REQUEST_METHOD") == "POST"
     body = environ["wsgi.input"].read(int(environ.get("CONTENT_LENGTH") or 0)) if post else b""
-    req = _Request(path, body)
+    req = _Request(path, body, environ.get("HTTP_X_FORWARDED_FOR") or environ.get("REMOTE_ADDR") or "")
     (Handler.do_POST if post else Handler.do_GET)(req)
     code, data, ctype = req.out
     start_response(f"{code} {'OK' if code < 400 else 'Error'}", [("Content-Type", ctype), ("Cache-Control", "no-store")])

@@ -51,6 +51,23 @@ def reload():
             state.update(fresh)
 
 
+_hits = {}
+
+
+def allow(key, limit, window=86400):
+    """Per-visitor usage limit (e.g. 10 people added per IP per day). Redis when available, else memory."""
+    if REDIS_URL:
+        n = _redis("INCR", f"proxyhearts:limit:{key}")
+        if n == 1:
+            _redis("EXPIRE", f"proxyhearts:limit:{key}", window)
+        return n <= limit
+    t, n = _hits.get(key, (time.time(), 0))
+    if time.time() - t > window:
+        t, n = time.time(), 0
+    _hits[key] = (t, n + 1)
+    return n + 1 <= limit
+
+
 def save():
     with lock:
         data = json.dumps(state, indent=None if REDIS_URL else 1)

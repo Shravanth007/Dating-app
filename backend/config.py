@@ -38,4 +38,6 @@ DATES_PER_PERSON = 2                          # "Run everyone": each agent dates
 DATE_TURNS = 8                                # lines of dialogue per date
 TOOL_RESULT_CHARS = 5000                      # a tool result is cut to this many characters
 KEEP_TOOL_RESULTS = 6                         # older tool results are shrunk so long loops stay cheap
+# Per visitor (IP) per day, so a public link can't burn the free AI quota or Apify credit
+LIMITS = {"people": 10, "onboard": 5, "date": 6, "chat": 40, "plan": 6, "hunt": 2, "run": 1, "analyze": 6, "search": 6}
 WORKERS = 4                                   # agents running at the same time
