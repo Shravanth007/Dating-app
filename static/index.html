@@ -4,119 +4,390 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Proxy Hearts</title>
 <style>
-:root{--bg:#fbf7f4;--card:#fff;--ink:#231a1f;--mute:#7b6d74;--line:#eadfe2;--acc:#d6336c;--acc2:#7048e8;--ok:#2b8a3e}
-*{box-sizing:border-box}body{margin:0;font:15px/1.5 system-ui,Segoe UI,sans-serif;background:var(--bg);color:var(--ink)}
-header{display:flex;gap:18px;align-items:center;padding:14px 24px;border-bottom:1px solid var(--line);background:var(--card);position:sticky;top:0;z-index:1;flex-wrap:wrap}
-header b{font-size:20px;color:var(--acc);margin-right:12px}header a{color:var(--mute);text-decoration:none;font-weight:600}header a.on{color:var(--ink)}
-main{max-width:1100px;margin:0 auto;padding:24px 16px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:16px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
-.person{display:flex;gap:12px;align-items:center;cursor:pointer}.person:hover{border-color:var(--acc)}
-.av{width:52px;height:52px;border-radius:50%;object-fit:cover;background:var(--line);flex:none;display:grid;place-items:center;font-weight:700;color:var(--mute)}
-.big .av{width:96px;height:96px;font-size:30px}
-.mute{color:var(--mute);font-size:13px}h2{margin:0 0 12px}h3{margin:18px 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--mute)}
-.chips span{display:inline-block;background:#fdeef3;color:#a61e4d;border-radius:99px;padding:3px 10px;margin:0 6px 6px 0;font-size:13px}
-.chips.v span{background:#f0ebff;color:#5f3dc4}.chips.g span{background:#ebfbee;color:#2b8a3e}.chips.r span{background:#fff4e6;color:#d9480f}
-button{background:var(--acc);color:#fff;border:0;border-radius:10px;padding:9px 16px;font-weight:600;cursor:pointer}button.alt{background:var(--acc2)}button.ghost{background:none;color:var(--mute);border:1px solid var(--line)}
-textarea,input,select{width:100%;font:inherit;padding:9px;border:1px solid var(--line);border-radius:10px;background:#fff}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
-.bubble{max-width:75%;padding:10px 14px;border-radius:16px;margin:8px 0;animation:in .4s}.bubble.l{background:#fdeef3}.bubble.r{background:#f0ebff;margin-left:auto}
-@keyframes in{from{opacity:0;transform:translateY(6px)}}
-.bubble small{display:block;font-weight:700;font-size:12px;color:var(--mute)}
-table{width:100%;border-collapse:collapse}td{padding:8px;border-top:1px solid var(--line);vertical-align:top}
-.score{font-weight:800;font-size:18px;color:var(--acc)}.bar{height:6px;background:var(--line);border-radius:3px}.bar i{display:block;height:100%;background:var(--acc);border-radius:3px}
-.ev td{font-size:13px}.err{color:#c92a2a}.pill{font-size:12px;padding:2px 8px;border-radius:99px;background:var(--line)}
-pre{white-space:pre-wrap;font-size:12px;background:#faf6f7;padding:10px;border-radius:8px;max-height:220px;overflow:auto}
-@media(max-width:640px){.row{grid-template-columns:1fr}.bubble{max-width:90%}}
+:root{color-scheme:light;--bg:#fbf7f4;--card:#fff;--ink:#22181d;--mute:#7d6f76;--line:#efe4e7;--soft:#fbf3f6;--acc:#e0356f;--acc2:#7b4dff;--ok:#2f9e44;--warn:#e8590c;--bad:#e03131;--li:#0a66c2;
+  --grad:linear-gradient(135deg,#ff5f8f,#7b4dff);--sh:0 1px 2px rgba(34,24,29,.04),0 10px 28px -14px rgba(34,24,29,.16)}
+*{box-sizing:border-box}
+html,body{overflow-x:hidden}
+body{margin:0;font:15px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);overflow-wrap:anywhere}
+a{color:inherit}
+h1,h2,.brand{font-family:ui-serif,Georgia,"Times New Roman",serif;letter-spacing:-.01em}
+h1{font-size:clamp(28px,5vw,42px);line-height:1.1;margin:0 0 10px}h2{font-size:22px;margin:0 0 4px}
+h3{margin:0 0 8px;font-size:11.5px;text-transform:uppercase;letter-spacing:.09em;color:var(--mute)}
+p{margin:0 0 8px}.mute{color:var(--mute);font-size:13.5px}
+header{position:sticky;top:0;z-index:5;background:rgba(255,255,255,.88);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.bar-in{max-width:1140px;margin:0 auto;padding:10px 16px;display:flex;gap:6px 14px;align-items:center;flex-wrap:wrap}
+.brand{font-size:21px;font-weight:700;text-decoration:none;margin-right:auto;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+nav{display:flex;gap:4px;flex-wrap:wrap}
+nav a{text-decoration:none;color:var(--mute);font-weight:600;font-size:14px;padding:6px 11px;border-radius:99px;display:inline-flex;gap:6px;align-items:center;transition:.2s}
+nav a:hover{background:var(--soft);color:var(--ink)}nav a.on{background:var(--ink);color:#fff}
+nav a .n{font-size:11px;background:var(--line);color:var(--ink);border-radius:99px;padding:0 7px}nav a.on .n{background:rgba(255,255,255,.2);color:#fff}
+main{max-width:1140px;margin:0 auto;padding:22px 16px 80px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px;margin-bottom:16px;box-shadow:var(--sh)}
+a.card{display:block;text-decoration:none;transition:transform .2s,border-color .2s,box-shadow .2s}a.card:hover{transform:translateY(-2px);border-color:#f3b6cb}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:16px;align-items:start}
+.flex{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.grow{flex:1;min-width:0}
+.av{--h:330;position:relative;width:44px;height:44px;border-radius:50%;flex:none;overflow:hidden;display:inline-grid;place-items:center;font-weight:700;font-size:15px;
+  background:hsl(var(--h) 75% 93%);color:hsl(var(--h) 45% 35%);box-shadow:0 0 0 2px #fff}
+.av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.av.sm{width:30px;height:30px;font-size:11px}.av.lg{width:64px;height:64px;font-size:22px}.av.xl{width:104px;height:104px;font-size:34px}
+.pair{display:flex}.pair .av+.av{margin-left:-12px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}.chips span{background:#fdeef3;color:#a61e4d;border-radius:99px;padding:3px 11px;font-size:13px}
+.chips.v span{background:#f1ecff;color:#5f3dc4}.chips.g span{background:#ebfbee;color:#2b8a3e}.chips.r span{background:#fff1e6;color:#c2410c}.chips.n span{background:#f3f0f1;color:#4a3f45}
+button,.btn{font:inherit;font-weight:650;font-size:14px;border:0;border-radius:12px;padding:10px 16px;cursor:pointer;background:var(--ink);color:#fff;text-decoration:none;display:inline-flex;gap:8px;align-items:center;justify-content:center;transition:transform .15s,opacity .2s;white-space:nowrap}
+button:hover,.btn:hover{transform:translateY(-1px)}button:disabled{opacity:.55;cursor:default;transform:none}
+.primary{background:var(--grad);box-shadow:0 8px 22px -10px #e0356f}.ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}.ghost.danger{color:var(--bad)}.sm{padding:7px 12px;font-size:13px;border-radius:10px}
+.big-btn{font-size:16px;padding:14px 22px;border-radius:14px}
+label{display:block;font-size:13px;font-weight:600;color:var(--mute);margin-bottom:10px}
+input,textarea,select{width:100%;font:inherit;color:var(--ink);padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#fff;margin-top:4px;transition:border-color .2s,box-shadow .2s}
+input:focus,textarea:focus,select:focus{outline:0;border-color:#f08fb0;box-shadow:0 0 0 4px #fde3ec}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+details summary{cursor:pointer;font-weight:600;font-size:13.5px;color:var(--acc2);margin:4px 0 10px}
+.note{background:var(--soft);border-radius:12px;padding:10px 14px;font-size:13.5px}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:3px 10px;border-radius:99px;background:#f3f0f1;color:#4a3f45;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pill.work{background:#fff3e8;color:var(--warn)}.pill.ok{background:#ebfbee;color:var(--ok)}.pill.bad{background:#fff0f0;color:var(--bad)}
+.dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex:none;animation:pulse 1.2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 currentColor}70%{box-shadow:0 0 0 7px transparent}100%{box-shadow:0 0 0 0 transparent}}
+.meter{height:7px;background:var(--line);border-radius:9px;overflow:hidden}.meter i{display:block;height:100%;background:var(--grad);border-radius:9px}
+.enter .meter i{animation:grow .9s cubic-bezier(.2,.8,.2,1)}@keyframes grow{from{width:0}}
+.enter>*{animation:rise .45s both}.enter>*:nth-child(2){animation-delay:.05s}.enter>*:nth-child(3){animation-delay:.1s}.enter>*:nth-child(4){animation-delay:.15s}.enter>*:nth-child(n+5){animation-delay:.2s}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}}
+.spin{width:16px;height:16px;border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:rot .8s linear infinite;flex:none}.spin.dk{border-color:#f3c6d6;border-top-color:var(--acc)}
+@keyframes rot{to{transform:rotate(360deg)}}
+/* pipeline */
+#pipe:empty{display:none}
+.pipe{background:var(--grad);color:#fff}.pipe .bar-in{padding:8px 16px;font-size:14px}
+.steps{display:flex;gap:6px;flex-wrap:wrap;list-style:none;padding:0;margin:0}
+.steps li{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:650;padding:4px 11px;border-radius:99px;background:rgba(0,0,0,.05);color:var(--mute)}
+.steps li.done{background:#ebfbee;color:var(--ok)}.steps li.on{background:var(--ink);color:#fff}
+.pipe .steps li{background:rgba(255,255,255,.18);color:#fff}.pipe .steps li.on{background:#fff;color:var(--acc)}.pipe .steps li.done{background:rgba(255,255,255,.32);color:#fff}
+/* hero */
+.hero{padding:26px 22px;border-radius:22px;background:radial-gradient(120% 140% at 0% 0%,#ffe3ec 0%,#fff 45%,#efe9ff 100%);border:1px solid var(--line);margin-bottom:18px}
+.flow{display:flex;flex-wrap:wrap;gap:8px;list-style:none;padding:0;margin:14px 0 0;counter-reset:f}
+.flow li{counter-increment:f;background:#fff;border:1px solid var(--line);border-radius:12px;padding:7px 12px;font-size:13.5px;font-weight:600}
+.flow li::before{content:counter(f);display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--grad);color:#fff;font-size:11px;margin-right:7px}
+.stats{display:flex;gap:18px;flex-wrap:wrap;margin-top:6px}.stats b{font-size:20px;display:block;font-family:ui-serif,Georgia,serif}.stats span{font-size:12px;color:var(--mute)}
+/* agent cards */
+.agent{position:relative;overflow:hidden;text-align:center;padding:22px 16px 16px}
+.agent .av{margin:0 auto 10px}.agent h4{margin:0;font-size:16px}.agent .hl{font-size:13px;color:var(--mute);margin:2px 0 10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.9em}
+.agent .foot{margin-top:12px;padding-top:10px;border-top:1px dashed var(--line);font-size:12.5px;color:var(--mute);display:flex;gap:6px;justify-content:center;align-items:center}
+.working::before{content:"";position:absolute;left:0;top:0;height:3px;width:40%;background:var(--grad);animation:slide 1.4s ease-in-out infinite}
+@keyframes slide{from{left:-40%}to{left:100%}}
+/* profile */
+.phead{display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+.links a{color:var(--mute);font-size:13.5px;margin-right:12px}
+.summary{font-family:ui-serif,Georgia,serif;font-size:19px;line-height:1.5;border-left:4px solid var(--acc);padding-left:16px;margin:4px 0 0}
+.secs{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:20px 26px;margin-top:20px}
+.secs p{font-size:14.5px}
+.brief{border:2px solid transparent;background:linear-gradient(#fff,#fff) padding-box,var(--grad) border-box}
+.brief .ideal{font-family:ui-serif,Georgia,serif;font-size:18px;margin:6px 0 16px}
+.sechead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.ev{display:grid;gap:0}.ev>div{display:grid;grid-template-columns:110px 1fr 1fr;gap:12px;padding:10px 0;border-top:1px solid var(--line);font-size:14px}
+.ev .inf{color:var(--acc2)}
+.src{display:inline-block;font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:99px;background:#f3f0f1;color:#4a3f45;height:fit-content;width:fit-content}
+.src.li{background:#e7f0fb;color:var(--li)}.src.ig{background:linear-gradient(90deg,#fde7ef,#f3e8ff);color:#c2255c}
+.conf{background:var(--soft);border-radius:12px;padding:12px 14px;margin-top:14px;font-size:14px}
+.working-card{display:flex;gap:16px;align-items:center}
+.match,.rrow{display:grid;grid-template-columns:34px minmax(0,1.3fr) minmax(120px,1fr) auto;gap:6px 14px;align-items:center;padding:14px 0;border-top:1px solid var(--line)}
+.match:first-of-type,.rrow:first-of-type{border-top:0}
+.match .reason,.rrow .why{grid-column:2/-1;font-size:14px;color:#4a3f45;margin:0}
+.pos{font-family:ui-serif,Georgia,serif;font-weight:700;font-size:20px;color:var(--acc)}
+.who{display:flex;gap:10px;align-items:center;text-decoration:none;min-width:0}.who small{display:block;color:var(--mute);font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fit{display:flex;gap:10px;align-items:center}.fit .meter{flex:1}.fit b{font-size:15px;min-width:26px;text-align:right}
+.tag{font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:99px;white-space:nowrap}.tag.dated{background:#f1ecff;color:#5f3dc4}.tag.est{border:1px dashed #cdbfc5;color:var(--mute)}.tag.mut{background:#ffe3ec;color:var(--acc)}
+/* recursive data */
+.via{font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;background:var(--ink);color:#fff;text-transform:uppercase;letter-spacing:.05em}
+.err{color:var(--bad);background:#fff5f5;border-radius:10px;padding:8px 12px;font-size:13.5px;margin:8px 0}
+.kvs{display:grid}.kv{display:grid;grid-template-columns:minmax(90px,150px) 1fr;gap:12px;padding:7px 0;border-top:1px solid #f6eef1;font-size:14px}.kv:first-child{border-top:0}
+.kv .k{color:var(--mute);font-size:12.5px;font-weight:600}
+.minis{display:grid;gap:8px}.mini{background:var(--soft);border-radius:12px;padding:8px 12px}.mini .kv{grid-template-columns:minmax(70px,110px) 1fr;padding:4px 0}
+.list{display:grid;gap:4px}.list>div{padding-left:12px;border-left:2px solid var(--line)}
+.clamp{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer;-webkit-mask-image:linear-gradient(#000 55%,transparent);mask-image:linear-gradient(#000 55%,transparent);white-space:pre-wrap}
+.clamp.open{display:block;-webkit-mask-image:none;mask-image:none}
+.thumb{width:84px;height:84px;object-fit:cover;border-radius:10px;display:block}
+.url{color:var(--li);font-size:13px}
+/* dates */
+.dcard .pair{margin-bottom:10px}.dcard .last{font-size:13.5px;color:#4a3f45;font-style:italic;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin:8px 0}
+.scores{display:flex;gap:8px;align-items:center;font-weight:800;color:var(--acc);font-size:18px}
+.chat{max-height:62vh;overflow-y:auto;padding:4px 4px 8px;scroll-behavior:auto}
+.msg{display:flex;gap:10px;align-items:flex-end;margin:12px 0;max-width:82%}.msg.r{margin-left:auto;flex-direction:row-reverse}
+.bub{padding:10px 15px;border-radius:18px 18px 18px 6px;background:#fdeef3;font-size:15px}.msg.r .bub{border-radius:18px 18px 6px 18px;background:#f1ecff}
+.bub small{display:block;font-size:11.5px;font-weight:700;color:var(--mute);margin-bottom:2px}.bub em{color:var(--mute)}
+.msg.new{animation:pop .45s cubic-bezier(.2,.9,.3,1.2)}@keyframes pop{from{opacity:0;transform:translateY(12px) scale(.96)}}
+.typing .bub{display:flex;gap:4px;padding:14px 16px}.typing i{width:7px;height:7px;border-radius:50%;background:#c9b8c0;animation:bob 1.1s infinite}.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes bob{0%,60%,100%{transform:none;opacity:.5}30%{transform:translateY(-5px);opacity:1}}
+.sys{text-align:center;color:var(--mute);font-size:13.5px;margin:16px 0;display:flex;gap:8px;justify-content:center;align-items:center}
+.venue{display:inline-flex;gap:6px;align-items:center;background:var(--soft);border-radius:99px;padding:4px 12px;font-size:13.5px;margin-top:6px}
+.ring{--p:0;width:74px;height:74px;border-radius:50%;flex:none;display:grid;place-items:center;background:conic-gradient(var(--acc) calc(var(--p)*1%),var(--line) 0)}
+.ring b{width:58px;height:58px;border-radius:50%;background:#fff;display:grid;place-items:center;font-size:22px;font-family:ui-serif,Georgia,serif}
+.outcome{text-align:center;font-weight:700;padding:12px;border-radius:14px;margin-bottom:16px}.outcome.yes{background:var(--grad);color:#fff}.outcome.no{background:#f3f0f1;color:var(--mute)}
+.skel{height:12px;border-radius:6px;background:linear-gradient(90deg,#f3eef0,#fbf7f8,#f3eef0);background-size:200% 100%;animation:sh 1.3s infinite;margin:10px 0}@keyframes sh{to{background-position:-200% 0}}
+/* rankings */
+.people-pick{display:flex;gap:8px;flex-wrap:wrap}.people-pick a{display:inline-flex;gap:7px;align-items:center;text-decoration:none;padding:4px 12px 4px 4px;border-radius:99px;border:1px solid var(--line);font-size:13.5px;font-weight:600;background:#fff}
+.people-pick a.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.top3 ol{list-style:none;padding:0;margin:10px 0 0;display:grid;gap:6px}.top3 li{display:flex;gap:8px;align-items:center;font-size:14px}.top3 li .grow{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.top3 li b{color:var(--acc)}.top3 li:first-child{font-weight:650}
+#toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,40px);opacity:0;background:var(--ink);color:#fff;padding:11px 18px;border-radius:12px;font-size:14px;transition:.3s;z-index:9;max-width:calc(100% - 32px);pointer-events:none}
+#toast.on{opacity:1;transform:translate(-50%,0)}#toast.bad{background:var(--bad)}
+.empty{text-align:center;padding:40px 20px;color:var(--mute)}
+@media(max-width:700px){.row{grid-template-columns:1fr}.msg{max-width:94%}.ev>div{grid-template-columns:1fr;gap:4px}.kv{grid-template-columns:1fr;gap:2px}
+  .match,.rrow{grid-template-columns:28px minmax(0,1fr) auto}.match .fit,.rrow .fit{grid-column:2/3}.match .reason,.rrow .why{grid-column:2/-1}
+  .match>:last-child,.rrow>:last-child{grid-column:2/-1;justify-self:start}.card{padding:16px}.brand{font-size:19px}}
 </style>
 </head>
 <body>
-<header><b>♥ Proxy Hearts</b><a href="#add">1 · Add people</a><a href="#people">2 · Agents & profiles</a><a href="#dates">3 · Dates</a><a href="#rank">4 · Rankings</a></header>
+<header><div class="bar-in"><a class="brand" href="#add">&#9829; Proxy Hearts</a><nav>
+  <a href="#add">1 &middot; Add</a><a href="#people">2 &middot; Agents <span class="n" id="n-people">0</span></a>
+  <a href="#dates">3 &middot; Dates <span class="n" id="n-dates">0</span></a><a href="#rank">4 &middot; Rankings</a></nav></div></header>
+<div id="pipe"></div>
 <main id="app"></main>
+<div id="toast"></div>
 <script>
-let S = {people:{}, dates:{}, rankings:{}};
+let S = {people:{}, dates:{}, rankings:{}, pipeline:{running:false, step:''}};
+let lastJSON = '', lastHTML = '', lastRoute = '', busy = false, enterT;
+const seen = {};  // date id -> transcript lines already shown (only newer ones animate in)
 const $ = s => document.querySelector(s);
-const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const P = id => S.people[id] || {name:'?'};
-const av = p => p.photo ? `<img class="av" src="${esc(p.photo)}" referrerpolicy="no-referrer" onerror="this.outerHTML='<div class=av>${esc((p.name||'?')[0])}</div>'">` : `<div class="av">${esc((p.name||'?')[0])}</div>`;
-const chips = (xs, c='') => `<div class="chips ${c}">${(xs||[]).map(x=>`<span>${esc(x)}</span>`).join('')}</div>`;
-const api = (path, body) => fetch(path, {method:'POST', body:JSON.stringify(body||{})}).then(r=>r.json()).then(r=>{ if(r.error) alert(r.error); refresh(); return r; });
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const enc = s => esc(encodeURIComponent(s));
+const arr = x => Array.isArray(x) ? x : (x == null || x === '' ? [] : [x]);
+const num = x => Math.max(0, Math.min(100, Math.round(+x || 0)));
+const href = u => /^https?:\/\//i.test(u || '') ? esc(u) : '#';
+const P = id => S.people[id] || {id, name:'(removed)'};
+const nm = p => p.name || p.profile?.name || ((String(p.instagram || '').match(/instagram\.com\/([^/?#]+)/i) || [])[1] ? '@' + String(p.instagram).match(/instagram\.com\/([^/?#]+)/i)[1] : 'New agent');
+const hue = s => [...String(s)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 7);
+const initials = p => nm(p).replace(/^@/, '').split(/[\s._]+/).filter(Boolean).map(w => w[0]).join('').slice(0, 2).toUpperCase() || '?';
+const av = (p, c = '') => `<span class="av ${c}" style="--h:${hue(p.id || nm(p))}"><span>${esc(initials(p))}</span>${p.photo ? `<img src="${esc(p.photo)}" alt="" referrerpolicy="no-referrer" loading="lazy" onerror="this.remove()">` : ''}</span>`;
+const txt = x => typeof x === 'object' && x ? Object.values(x).join(' — ') : x;
+const chips = (xs, c = '') => arr(xs).length ? `<div class="chips ${c}">${arr(xs).map(x => `<span>${esc(txt(x))}</span>`).join('')}</div>` : '<p class="mute">&mdash;</p>';
+const val = (v, c) => Array.isArray(v) ? chips(v, c) : (v ? `<p>${esc(txt(v))}</p>` : '<p class="mute">&mdash;</p>');
+const sec = (t, v, c = '') => `<div><h3>${t}</h3>${val(v, c)}</div>`;
+const meter = (x, wide) => `<div class="fit"><div class="meter"><i style="width:${num(x)}%"></i></div><b>${num(x)}</b></div>`;
+const isWork = s => !!s && s !== 'ready' && s !== 'done' && !/^error/i.test(s);
+const pill = s => { s = s || 'queued'; const k = /^error/i.test(s) ? 'bad' : (s === 'ready' || s === 'done') ? 'ok' : 'work';
+  return `<span class="pill ${k}" title="${esc(s)}">${k === 'work' ? '<i class="dot"></i>' : ''}${esc(s.length > 46 ? s.slice(0, 44) + '…' : s)}</span>`; };
+const srcCls = s => /insta/i.test(s) ? 'ig' : /linked/i.test(s) ? 'li' : '';
+const human = k => String(k).replace(/([a-z])([A-Z])/g, '$1 $2').replace(/[_-]+/g, ' ').trim().replace(/^./, c => c.toUpperCase());
+const ready = () => Object.values(S.people).filter(p => p.profile);
+const findDate = (a, b) => Object.values(S.dates).filter(d => ((d.a === a && d.b === b) || (d.a === b && d.b === a)) && !/^error/i.test(d.status || '')).pop();
+const dateBtn = (a, b, id) => { const d = (id && S.dates[id]) || findDate(a, b);
+  return d ? `<a class="btn ghost sm" href="#d/${enc(d.id)}">${d.status === 'done' ? 'Read the date' : '<i class="dot" style="color:var(--acc)"></i> Watch live'} &rarr;</a>`
+           : `<button class="sm" data-act="date" data-a="${esc(a)}" data-b="${esc(b)}">&#9829; Send on a date</button>`; };
+const empty = (msg, link = '') => `<div class="card empty"><p>${msg}</p>${link}</div>`;
+
+// pipeline stepper: Read -> Search -> Date -> Rank
+const STAGES = [['Read people', /read|analy|people|scrap/], ['Agents search', /search/], ['Agents date', /dat/], ['Rank', /rank/]];
+function steps() { const pl = S.pipeline || {}, s = String(pl.step || '').toLowerCase();
+  let at = s === 'done' || (!pl.running && /done/.test(s)) ? STAGES.length : pl.running ? STAGES.findIndex(([, re]) => re.test(s)) : -1;
+  return `<ol class="steps">${STAGES.map(([t], i) => `<li class="${i < at ? 'done' : i === at ? 'on' : ''}">${i < at ? '&#10003;' : i === at ? '<i class="dot"></i>' : i + 1} ${t}</li>`).join('')}</ol>`; }
+
+// generic recursive renderer for scraped source JSON
+function tree(v, d = 0) {
+  if (v == null || v === '' || (Array.isArray(v) && !v.length)) return '';
+  if (typeof v === 'boolean') return v ? 'yes' : 'no';
+  if (typeof v === 'number') return esc(v.toLocaleString());
+  if (typeof v !== 'object') { const s = String(v);
+    if (/^https?:\/\/\S+$/i.test(s)) return /\.(jpe?g|png|webp|gif)(\?|$)|cdninstagram|fbcdn|licdn|media\./i.test(s)
+      ? `<a href="${href(s)}" target="_blank" rel="noopener"><img class="thumb" src="${esc(s)}" alt="" referrerpolicy="no-referrer" loading="lazy" onerror="this.parentNode.remove()"></a>`
+      : `<a class="url" href="${href(s)}" target="_blank" rel="noopener">${esc(s.replace(/^https?:\/\/(www\.)?/i, '').slice(0, 60))}</a>`;
+    return s.length > 220 ? `<div class="clamp" data-act="clamp" title="Click to expand">${esc(s)}</div>` : esc(s); }
+  if (d > 5) return `<code>${esc(JSON.stringify(v).slice(0, 200))}</code>`;
+  if (Array.isArray(v)) {
+    if (v.every(x => x != null && typeof x !== 'object' && String(x).length < 60 && !/^https?:/i.test(x))) return chips(v, 'n');
+    const objs = v.some(x => x && typeof x === 'object'), cls = objs ? 'minis' : 'list';
+    const items = v.map(x => tree(x, d + 1)).filter(Boolean).map(h => `<div class="${objs ? 'mini' : ''}">${h}</div>`);
+    return `<div class="${cls}">${items.slice(0, 6).join('')}</div>` + (items.length > 6 ? `<details><summary>+ ${items.length - 6} more</summary><div class="${cls}">${items.slice(6).join('')}</div></details>` : ''); }
+  const rows = Object.entries(v).map(([k, x]) => { const h = tree(x, d + 1); return h ? `<div class="kv"><div class="k">${esc(human(k))}</div><div class="v">${h}</div></div>` : ''; }).join('');
+  return rows ? `<div class="kvs">${rows}</div>` : '';
+}
 
 const views = {
   add: () => `
-    <div class="card"><h2>Add a person</h2><p class="mute">Two sources only: their LinkedIn and their public Instagram. The agent fetches both.
-      If a site blocks the fetch, paste the public profile text (bio, about, captions) from that same page.</p>
-      <div class="row"><input id="li" placeholder="https://www.linkedin.com/in/…"><input id="ig" placeholder="https://www.instagram.com/…"></div>
-      <div class="row"><textarea id="lit" rows="3" placeholder="(optional) text copied from their public LinkedIn"></textarea><textarea id="igt" rows="3" placeholder="(optional) text copied from their public Instagram"></textarea></div>
-      <div class="row"><select id="gen"><option value="">Gender (optional)</option><option value="men">Man</option><option value="women">Woman</option></select>
-        <select id="seek"><option value="everyone">Open to dating everyone</option><option value="men">Men</option><option value="women">Women</option></select></div>
-      <button onclick="addOne()">Create agent</button></div>
-    <div class="card"><h2>Bulk add</h2><p class="mute">One person per line: <code>linkedin_url instagram_url</code></p>
-      <textarea id="bulk" rows="8"></textarea><br><br><button onclick="addBulk()">Create all agents</button></div>`,
+    <section class="hero"><h1>Every person gets an AI agent.</h1>
+      <p class="mute" style="font-size:15.5px;max-width:720px">Paste two links. The agent reads its person, builds a persona, searches the pool for who fits, goes on dates with other agents, then privately debriefs and ranks everyone.</p>
+      <ol class="flow"><li>Scrape LinkedIn + Instagram</li><li>Agent builds the persona</li><li>Agent searches the pool</li><li>Agents go on dates</li><li>Private debriefs &rarr; rankings</li></ol></section>
+    <div class="two">
+      <div class="card"><h2>Add a person</h2>
+        <p class="note" style="margin:10px 0 16px"><b>Two sources only.</b> The agent sees this person's LinkedIn and public Instagram and nothing else: no web search, no outside knowledge.</p>
+        <label>LinkedIn profile URL<input id="li" placeholder="https://www.linkedin.com/in/…" autocomplete="off"></label>
+        <label>Instagram profile URL<input id="ig" placeholder="https://www.instagram.com/…" autocomplete="off"></label>
+        <details><summary>Site blocked the scrape? Paste the profile text instead</summary>
+          <label>Text copied from their LinkedIn<textarea id="lit" rows="3" placeholder="Headline, about, experience…"></textarea></label>
+          <label>Text copied from their Instagram<textarea id="igt" rows="3" placeholder="Bio, recent captions…"></textarea></label></details>
+        <div class="row"><label>Gender (optional)<select id="gen"><option value="">Prefer not to say</option><option value="men">Man</option><option value="women">Woman</option></select></label>
+          <label>Wants to date<select id="seek"><option value="everyone">Everyone</option><option value="men">Men</option><option value="women">Women</option></select></label></div>
+        <button class="primary big-btn" data-act="addOne">Create agent &rarr;</button></div>
+      <div class="card"><h2>Bulk add</h2><p class="mute">One person per line: <code>linkedin_url instagram_url</code></p>
+        <textarea id="bulk" rows="9" placeholder="https://www.linkedin.com/in/jane-doe https://www.instagram.com/jane.doe&#10;https://www.linkedin.com/in/sam-lee https://www.instagram.com/samlee"></textarea>
+        <div style="margin-top:12px"><button class="big-btn" data-act="addBulk">Create all agents &rarr;</button></div></div></div>`,
 
-  people: () => `<div class="card" style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
-      <div><h2 style="margin:0">${Object.keys(S.people).length} agents</h2><span class="mute">${Object.values(S.people).filter(p=>p.profile).length} have read their person</span></div>
-      <button class="alt" onclick="api('/api/round').then(()=>location.hash='dates')">♥ Start speed-dating round</button></div>
-    <div class="grid">${Object.values(S.people).map(p=>`
-      <div class="card person" onclick="location.hash='p/${p.id}'">${av(p)}<div><b>${esc(p.name||'(reading…)')}</b>
-      <div class="mute">${esc(p.profile?.headline||'')}</div><span class="pill ${p.status.startsWith('error')?'err':''}">${esc(p.status)}</span></div></div>`).join('')}</div>`,
+  people: () => { const ps = Object.values(S.people), pl = S.pipeline || {}, ds = Object.values(S.dates);
+    return `<div class="card hero" style="margin-bottom:18px"><div class="flex" style="justify-content:space-between;align-items:flex-start;gap:18px">
+        <div class="grow"><h2>${ps.length} agent${ps.length === 1 ? '' : 's'} in the pool</h2>
+          <div class="stats"><div><b>${ready().length}</b><span>read their person</span></div><div><b>${ps.filter(p => p.search).length}</b><span>searched the pool</span></div>
+            <div><b>${ds.filter(d => d.status === 'done').length}<span style="font-size:14px">/${ds.length}</span></b><span>dates finished</span></div><div><b>${Object.keys(S.rankings || {}).length}</b><span>rankings</span></div></div></div>
+        <button class="primary big-btn" data-act="run" ${pl.running || ps.length < 2 ? 'disabled' : ''}>${pl.running ? '<span class="spin"></span> Running…' : '&#9829; Run everything: search &rarr; date &rarr; rank'}</button></div>
+      <div style="margin-top:16px" class="flex">${steps()}${pl.step ? `<span class="mute">${pl.running ? 'Now: ' : 'Last run: '}${esc(pl.step)}</span>` : ''}</div></div>
+    ${ps.length ? `<div class="grid">${ps.map(p => { const top = (p.search?.matches || []).find(m => S.people[m.id]);
+      return `<a class="card agent ${isWork(p.status) ? 'working' : ''}" href="#p/${enc(p.id)}">${av(p, 'xl')}<h4>${esc(nm(p))}</h4>
+        <div class="hl">${esc(p.profile?.headline || (isWork(p.status) ? 'The agent is reading its person…' : ''))}</div>${pill(p.status)}
+        <div class="foot">${top ? `Top fit ${av(P(top.id), 'sm')} <b>${esc(nm(P(top.id)))}</b> ${num(top.fit)}` : p.profile ? 'Ready to search the pool' : 'Building persona'}</div></a>`; }).join('')}</div>`
+      : empty('No agents yet.', '<a class="btn primary" href="#add">Add the first person &rarr;</a>')}`; },
 
-  p: id => { const p = P(id), f = p.profile; if(!p.sources) return 'Not found';
-    const others = Object.values(S.people).filter(q=>q.profile && q.id!==id);
-    return `<div class="card big" style="display:flex;gap:18px;align-items:center;flex-wrap:wrap">${av(p)}<div style="flex:1;min-width:220px">
-        <h2 style="margin:0">${esc(p.name)}</h2><div>${esc(f?.headline||'')}</div>
-        <div class="mute"><a href="${esc(p.linkedin)}" target="_blank">LinkedIn</a> · <a href="${esc(p.instagram)}" target="_blank">Instagram</a> · agent status: ${esc(p.status)}</div></div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="ghost" onclick="api('/api/people/${id}/analyze')">Re-read</button>
-        ${f?`<button class="ghost" onclick="location.hash='rank/${id}'">Rankings</button>`:''}
-        <button class="ghost" onclick="confirm('Delete?')&&api('/api/people/${id}/delete').then(()=>location.hash='people')">Delete</button></div></div>
-      ${f ? `<div class="card"><h3>The agent's read</h3><p>${esc(f.summary)}</p>
-        <div class="row"><div><h3>Needs</h3>${chips(f.needs)}</div><div><h3>Looking for</h3><p>${esc(f.looking_for)}</p></div></div>
-        <div class="row"><div><h3>Hobbies</h3>${chips(f.hobbies)}</div><div><h3>Interests</h3>${chips(f.interests)}</div></div>
-        <div class="row"><div><h3>Values</h3>${chips(f.values,'v')}</div><div><h3>Personality</h3>${chips(f.personality,'v')}</div></div>
-        <div class="row"><div><h3>Green flags</h3>${chips(f.green_flags,'g')}</div><div><h3>Possible dealbreakers</h3>${chips(f.possible_dealbreakers,'r')}</div></div>
-        <div class="row"><div><h3>Communication style</h3><p>${esc(f.communication_style)}</p></div><div><h3>Lifestyle</h3><p>${esc(f.lifestyle)}</p></div></div>
-        <h3>Ideal first date</h3><p>${esc(f.ideal_first_date)}</p>
-        <h3>Evidence — how the agent got there</h3><table class="ev">${f.evidence.map(e=>`<tr><td><span class="pill">${esc(e.source)}</span></td><td>${esc(e.signal)}</td><td>→ ${esc(e.inference)}</td></tr>`).join('')}</table>
-        <p class="mute">Data confidence: ${esc(f.data_confidence)}</p></div>
-        <div class="card"><h3>Send this agent on a date</h3><div style="display:flex;gap:10px"><select id="partner">${others.map(q=>`<option value="${q.id}">${esc(q.name)}</option>`).join('')}</select>
-        <button onclick="api('/api/date',{a:'${id}',b:$('#partner').value}).then(r=>location.hash='d/'+r.id)">Go on date</button></div></div>` : ''}
-      <div class="card"><h3>Raw sources the agent read</h3>${['linkedin','instagram'].map(k=>{const s=p.sources[k];return `<b>${k}</b>
-        ${s.error?`<div class="err">${esc(s.error)}</div>`:''}<pre>${esc([s.fetched,s.pasted].filter(Boolean).join('\n\n— pasted —\n')||'(nothing yet)')}</pre>`}).join('')}</div>`; },
+  p: id => { const p = S.people[id]; if (!p) return empty('This agent no longer exists.', '<a class="btn ghost" href="#people">Back to agents</a>');
+    const f = p.profile, pb = f?.partner_brief || {}, src = p.sources || {}, m = (p.search?.matches || []).filter(x => S.people[x.id]);
+    return `<div class="card phead">${av(p, 'xl')}<div class="grow" style="min-width:220px"><h1 style="font-size:32px;margin:0">${esc(nm(p))}</h1>
+        <div style="margin:2px 0 6px">${esc(f?.headline || '')}</div>
+        <div class="links"><a href="${href(p.linkedin)}" target="_blank" rel="noopener">LinkedIn &nearr;</a><a href="${href(p.instagram)}" target="_blank" rel="noopener">Instagram &nearr;</a>
+          ${p.gender ? `<span class="mute">${esc(p.gender === 'men' ? 'man' : p.gender === 'women' ? 'woman' : p.gender)} &middot; </span>` : ''}<span class="mute">dates ${esc(p.seeking || 'everyone')}</span></div>
+        <div style="margin-top:8px">${pill(p.status)}</div></div>
+      <div class="flex"><button class="ghost sm" data-act="analyze" data-id="${esc(id)}">&#8635; Re-read</button><button class="ghost sm" data-act="search" data-id="${esc(id)}" ${f ? '' : 'disabled'}>&#9906; Re-search</button>
+        <a class="btn ghost sm" href="#rank/${enc(id)}">Rankings</a><button class="ghost sm danger" data-act="del" data-id="${esc(id)}" data-name="${esc(nm(p))}">Delete</button></div></div>
+    ${!f ? `<div class="card working-card">${isWork(p.status) ? '<span class="spin dk"></span>' : ''}<div><h2>${isWork(p.status) ? 'The agent is reading its person' : 'No persona yet'}</h2>
+        <ol class="steps" style="margin-top:8px">${['reading linkedin', 'reading instagram', 'analyzing'].map((s, i, a) => { const at = a.findIndex(x => String(p.status).toLowerCase().startsWith(x));
+          return `<li class="${at > i ? 'done' : at === i ? 'on' : ''}">${at > i ? '&#10003;' : at === i ? '<i class="dot"></i>' : i + 1} ${s}</li>`; }).join('')}</ol>
+        ${/^error/i.test(p.status || '') ? `<div class="err">${esc(p.status)}</div>` : ''}</div></div>` : `
+    <div class="card"><h3>The agent's read on ${esc(nm(p))}</h3><p class="summary">${esc(f.summary)}</p>
+      <div class="secs">${sec('Needs', f.needs)}${sec('Looking for', f.looking_for)}${sec('Hobbies', f.hobbies)}${sec('Interests', f.interests)}
+        ${sec('Values', f.values, 'v')}${sec('Personality', f.personality, 'v')}${sec('Communication style', f.communication_style)}${sec('Lifestyle', f.lifestyle)}${sec('Voice', f.voice)}</div></div>
+    <div class="card brief"><h3>Partner brief &middot; who the agent is looking for</h3><p class="ideal">${esc(txt(pb.ideal_partner) || '—')}</p>
+      <div class="secs" style="margin-top:0">${sec('Must-haves', pb.must_haves, 'g')}${sec('Nice-to-haves', pb.nice_to_haves)}${sec('Avoid', pb.avoid, 'r')}</div></div>
+    <div class="card"><div class="secs" style="margin-top:0">${sec('Green flags', f.green_flags, 'g')}${sec('Possible dealbreakers', f.possible_dealbreakers, 'r')}${sec('Ideal first date', f.ideal_first_date)}</div></div>
+    <div class="card"><h3>Evidence &middot; how the agent got there</h3><div class="ev">${arr(f.evidence).map(e => `<div><span class="src ${srcCls(e.source)}">${esc(e.source)}</span><div>${esc(e.signal)}</div><div class="inf">&rarr; ${esc(e.inference)}</div></div>`).join('') || '<p class="mute">No evidence listed.</p>'}</div>
+      <div class="conf"><b>Data confidence:</b> ${esc(txt(f.data_confidence) || '—')}</div></div>
+    <div class="card"><div class="sechead"><div><h2>Who this agent is searching for</h2><span class="mute">The agent's pre-date search over the pool, best fit first</span></div>
+        ${/search/i.test(p.status || '') ? '<span class="pill work"><i class="dot"></i>searching…</span>' : ''}</div>
+      ${m.length ? m.map((x, i) => { const q = P(x.id); return `<div class="match"><span class="pos">${i + 1}</span>
+        <a class="who" href="#p/${enc(q.id)}">${av(q)}<span style="min-width:0"><b>${esc(nm(q))}</b><small>${esc(q.profile?.headline || '')}</small></span></a>
+        ${meter(x.fit)}${dateBtn(id, q.id)}<p class="reason">${esc(x.reason)}</p></div>`; }).join('')
+        : `<p class="mute">${p.search ? 'The search found nobody who fits yet.' : 'This agent hasn\'t searched the pool yet. Hit Re-search, or run everything from the Agents page.'}</p>`}</div>`}
+    <h3 style="margin:26px 4px 10px">What the agent read &middot; its only two sources</h3>
+    <div class="two">${[['linkedin', 'LinkedIn', p.linkedin], ['instagram', 'Instagram', p.instagram]].map(([k, label, url]) => { const s = src[k] || {}, body = tree(s.data);
+      return `<div class="card"><div class="flex" style="margin-bottom:12px"><span class="src ${srcCls(label)}">${label}</span>${s.via ? `<span class="via">via ${esc(s.via)}</span>` : ''}
+          <a class="url grow" href="${href(url)}" target="_blank" rel="noopener" style="text-align:right">${esc(String(url || '').replace(/^https?:\/\/(www\.)?/i, ''))}</a></div>
+        ${s.error ? `<div class="err">${esc(s.error)}</div>` : ''}${body || `<p class="mute">${isWork(p.status) ? 'Scraping…' : 'Nothing scraped.'}</p>`}
+        ${s.pasted ? `<h3 style="margin-top:14px">Pasted text</h3><div class="clamp" data-act="clamp" title="Click to expand">${esc(s.pasted)}</div>` : ''}</div>`; }).join('')}</div>`; },
 
-  dates: () => { const ds = Object.values(S.dates).reverse();
-    return `<div class="card"><h2>${ds.length} dates</h2><span class="mute">${ds.filter(d=>d.status!=='done').length} happening right now</span></div>
-    <div class="grid">${ds.map(d=>`<div class="card person" onclick="location.hash='d/${d.id}'">${av(P(d.a))}${av(P(d.b))}<div>
-      <b>${esc(P(d.a).name)} & ${esc(P(d.b).name)}</b><div class="mute">${d.status==='done'?`♥ ${d.verdicts[d.a].score} / ${d.verdicts[d.b].score}`:esc(d.status)+' · '+d.transcript.length+' lines'}</div></div></div>`).join('')}</div>`; },
+  dates: () => { const ds = Object.values(S.dates).reverse().sort((x, y) => (y.status === 'done' ? 0 : 1) - (x.status === 'done' ? 0 : 1)), rs = ready();
+    return `<div class="card"><div class="sechead" style="margin:0"><div><h2>${ds.length} date${ds.length === 1 ? '' : 's'}</h2>
+        <span class="mute">${ds.filter(d => isWork(d.status)).length} happening right now &middot; each agent speaks only for its own person</span></div>
+      ${rs.length > 1 ? `<div class="flex"><select id="da" style="width:auto;margin:0">${rs.map(q => `<option value="${esc(q.id)}">${esc(nm(q))}</option>`).join('')}</select>&times;
+        <select id="db" style="width:auto;margin:0">${rs.map((q, i) => `<option value="${esc(q.id)}" ${i === 1 ? 'selected' : ''}>${esc(nm(q))}</option>`).join('')}</select>
+        <button class="sm" data-act="pick">&#9829; Send on a date</button></div>` : ''}</div></div>
+    ${ds.length ? `<div class="grid">${ds.map(d => { const A = P(d.a), B = P(d.b), va = d.verdicts?.[d.a], vb = d.verdicts?.[d.b], t = d.transcript || [], last = t[t.length - 1];
+      return `<a class="card dcard ${isWork(d.status) ? 'working' : ''}" href="#d/${enc(d.id)}" style="position:relative;overflow:hidden"><div class="pair">${av(A, 'lg')}${av(B, 'lg')}</div>
+        <b>${esc(nm(A))} &amp; ${esc(nm(B))}</b><div class="mute">${esc(d.venue || 'choosing a spot…')}</div>
+        ${isWork(d.status) && last ? `<div class="last">${esc(nm(P(last.who)))}: “${esc(last.text)}”</div>` : ''}
+        <div class="flex" style="justify-content:space-between;margin-top:10px">${pill(d.status)}<span class="mute">${t.length} line${t.length === 1 ? '' : 's'}</span>
+          ${va && vb ? `<span class="scores">${num(va.score)} <span style="font-size:14px">&#9829;</span> ${num(vb.score)}</span>` : ''}</div>
+        ${va && vb && va.second_date && vb.second_date ? '<div style="margin-top:8px"><span class="tag mut">&#9829; mutual 2nd date</span></div>' : ''}</a>`; }).join('')}</div>`
+      : empty('No dates yet. Run everything from the Agents page, or send two agents out by hand.', '<a class="btn primary" href="#people">Go to agents &rarr;</a>')}`; },
 
-  d: id => { const d = S.dates[id]; if(!d) return 'Not found';
-    return `<div class="card" style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">${av(P(d.a))}${av(P(d.b))}<div><h2 style="margin:0">${esc(P(d.a).name)} × ${esc(P(d.b).name)}</h2>
-      <div class="mute">📍 ${esc(d.venue||'choosing a spot…')}</div><span class="pill">${esc(d.status)}</span></div></div>
-      <div class="card">${d.transcript.map(t=>`<div class="bubble ${t.who===d.a?'l':'r'}"><small>${esc(P(t.who).name)}'s agent</small>${esc(t.text)}</div>`).join('') || '<p class="mute">The agents are arriving…</p>'}
-      ${d.status==='on the date'?'<p class="mute">…typing</p>':''}</div>
-      ${Object.keys(d.verdicts).length?`<div class="row">${[d.a,d.b].filter(x=>d.verdicts[x]).map(x=>{const v=d.verdicts[x];return `<div class="card">
-        <h3>${esc(P(x).name)}'s agent — private debrief</h3><div class="score">${v.score}/100 ${v.second_date?'· wants a 2nd date':'· no 2nd date'}</div>
-        <p>${esc(v.summary)}</p><p class="mute">${esc(v.chemistry)}</p>${chips(v.shared_ground,'g')}${chips(v.friction,'r')}</div>`}).join('')}</div>`:''}`; },
+  d: id => { const d = S.dates[id]; if (!d) return empty('Date not found.', '<a class="btn ghost" href="#dates">All dates</a>');
+    const A = P(d.a), B = P(d.b), t = d.transcript || [], fresh = lastRoute !== 'd/' + id, from = fresh ? t.length : (seen[id] ?? t.length);
+    seen[id] = t.length;
+    const lastWho = t.length ? t[t.length - 1].who : null, next = lastWho === d.a ? B : A;
+    const bubble = (q, side, body, cls = '') => `<div class="msg ${side} ${cls}">${av(q, 'sm')}<div class="bub"><small>${esc(nm(q))}'s agent</small>${body}</div></div>`;
+    const vs = [d.a, d.b].map(x => d.verdicts?.[x]), both = vs[0] && vs[1];
+    return `<div class="card"><div class="flex" style="gap:16px"><div class="pair">${av(A, 'lg')}${av(B, 'lg')}</div><div class="grow">
+        <h2><a href="#p/${enc(d.a)}" style="text-decoration:none">${esc(nm(A))}</a> &times; <a href="#p/${enc(d.b)}" style="text-decoration:none">${esc(nm(B))}</a></h2>
+        <span class="venue">&#9873; ${esc(d.venue || 'choosing a spot…')}</span></div>${pill(d.status)}</div></div>
+      <div class="card"><div class="chat" id="chat">${t.map((m, i) => bubble(P(m.who), m.who === d.a ? 'l' : 'r', esc(m.text).replace(/\*([^*]+)\*/g, '<em>$1</em>'), i >= from ? 'new' : '')).join('')
+        || (isWork(d.status) ? '<p class="sys">The agents are arriving…</p>' : '')}
+        ${d.status === 'on the date' ? bubble(next, next.id === d.a ? 'l' : 'r', '<i></i><i></i><i></i>', 'typing') : ''}
+        ${d.status === 'debriefing' ? '<div class="sys"><span class="spin dk"></span>Date over. Each agent is privately writing up a debrief for its person…</div>' : ''}
+        ${/^error/i.test(d.status || '') ? `<div class="err">${esc(d.status)}</div>` : ''}</div></div>
+      ${both ? `<div class="outcome ${vs[0].second_date && vs[1].second_date ? 'yes' : 'no'}">${vs[0].second_date && vs[1].second_date ? '&#9829; It\'s mutual: both agents want a second date' : 'No mutual second date'}</div>` : ''}
+      ${vs.some(Boolean) || d.status === 'debriefing' ? `<div class="two">${[A, B].map((q, i) => { const v = vs[i], o = i ? A : B;
+        return v ? `<div class="card"><h3>${esc(nm(q))}'s agent &middot; private debrief on ${esc(nm(o))}</h3>
+          <div class="flex" style="gap:16px;margin:8px 0 12px"><div class="ring" style="--p:${num(v.score)}"><b>${num(v.score)}</b></div>
+            <div class="grow"><span class="tag ${v.second_date ? 'mut' : 'est'}">${v.second_date ? '&#9829; wants a 2nd date' : 'no 2nd date'}</span><p style="margin-top:8px">${esc(v.summary)}</p></div></div>
+          <h3>Chemistry</h3><p style="font-style:italic">${esc(v.chemistry)}</p>
+          <div class="row" style="margin-top:12px"><div><h3>Shared ground</h3>${chips(v.shared_ground, 'g')}</div><div><h3>Friction</h3>${chips(v.friction, 'r')}</div></div></div>`
+          : `<div class="card"><h3>${esc(nm(q))}'s agent &middot; private debrief</h3><p class="mute">Writing…</p><div class="skel"></div><div class="skel" style="width:80%"></div><div class="skel" style="width:60%"></div></div>`; }).join('')}</div>` : ''}`; },
 
-  rank: id => { const ids = Object.keys(S.rankings); if(!ids.length) return '<div class="card">No profiles yet.</div>';
-    id = id || ids[0];
-    return `<div class="card"><h2>Who fits whom best</h2><select onchange="location.hash='rank/'+this.value">${ids.map(x=>`<option value="${x}" ${x===id?'selected':''}>${esc(P(x).name)}</option>`).join('')}</select>
-      <p class="mute">Dated pairs are scored by both agents' debriefs (60% this person's agent, 40% theirs). Undated pairs are an estimate until they meet.</p></div>
-      <div class="card"><table>${(S.rankings[id]||[]).map((r,i)=>`<tr><td><b>#${i+1}</b></td><td>${av(P(r.id))}</td>
-        <td><b><a href="#p/${r.id}">${esc(P(r.id).name)}</a></b> ${r.second_date?'<span class="pill">♥ mutual 2nd date</span>':''}<div class="mute">${esc(r.why)}</div></td>
-        <td style="width:140px"><div class="score">${r.score}</div><div class="bar"><i style="width:${r.score}%"></i></div>
-        ${r.dated?`<a class="mute" href="#d/${r.dated}">read the date →</a>`:`<a class="mute" href="javascript:api('/api/date',{a:'${id}',b:'${r.id}'}).then(r=>location.hash='d/'+r.id)">send on date →</a>`}</td></tr>`).join('')}</table></div>`; },
+  rank: id => { const ids = Object.keys(S.rankings || {}).filter(x => S.people[x]);
+    if (!ids.length) return empty('No rankings yet. Run everything from the Agents page.', '<a class="btn primary" href="#people">Go to agents &rarr;</a>');
+    const pick = `<div class="people-pick"><a href="#rank" class="${id ? '' : 'on'}">&nbsp;&nbsp;Everyone</a>${ids.map(x => `<a href="#rank/${enc(x)}" class="${x === id ? 'on' : ''}">${av(P(x), 'sm')}${esc(nm(P(x)))}</a>`).join('')}</div>`;
+    const stage = r => r.stage === 'dated' ? '<span class="tag dated">dated</span>' : '<span class="tag est">pre-date estimate</span>';
+    if (!id || !S.rankings[id]) { const mut = {};
+      ids.forEach(x => S.rankings[x].forEach(r => { if (r.second_date && S.people[r.id]) mut[[x, r.id].sort().join('|')] = r; }));
+      return `<div class="card"><h2>Who fits whom best</h2><p class="mute">Dated pairs are scored from both agents' private debriefs. Pairs that haven't met show the agent's pre-date estimate.</p>${pick}</div>
+        ${Object.keys(mut).length ? `<div class="card brief"><h3>&#9829; Mutual matches &middot; both agents want a second date</h3><div class="flex" style="gap:18px;margin-top:10px">${Object.entries(mut).map(([k, r]) => { const [a, b] = k.split('|');
+          return `<a href="${r.date ? '#d/' + enc(r.date) : '#rank/' + enc(a)}" class="flex" style="text-decoration:none;gap:8px"><span class="pair">${av(P(a))}${av(P(b))}</span><b>${esc(nm(P(a)))} &amp; ${esc(nm(P(b)))}</b><span class="pos" style="font-size:16px">${num(r.score)}</span></a>`; }).join('')}</div></div>` : ''}
+        <h3 style="margin:20px 4px 10px">Top 3 for everyone</h3>
+        <div class="grid">${ids.map(x => `<a class="card top3" href="#rank/${enc(x)}"><div class="flex">${av(P(x))}<div class="grow"><b>${esc(nm(P(x)))}</b><div class="mute">${S.rankings[x].length} ranked</div></div></div>
+          <ol>${S.rankings[x].filter(r => S.people[r.id]).slice(0, 3).map((r, i) => `<li><span class="mute">${i + 1}</span>${av(P(r.id), 'sm')}<span class="grow">${esc(nm(P(r.id)))}</span>${r.second_date ? '<span style="color:var(--acc)">&#9829;</span>' : ''}<span class="tag ${r.stage === 'dated' ? 'dated' : 'est'}" title="${r.stage === 'dated' ? 'dated' : 'pre-date estimate'}">${r.stage === 'dated' ? 'dated' : 'est.'}</span><b>${num(r.score)}</b></li>`).join('') || '<li class="mute">Nobody yet</li>'}</ol></a>`).join('')}</div>`; }
+    const rows = S.rankings[id].filter(r => S.people[r.id]);
+    return `<div class="card"><div class="flex" style="margin-bottom:14px">${av(P(id), 'lg')}<div class="grow"><h2>Best matches for <a href="#p/${enc(id)}">${esc(nm(P(id)))}</a></h2>
+        <span class="mute">Ranked by ${esc(nm(P(id)))}'s agent. Real dates outrank pre-date estimates.</span></div></div>${pick}</div>
+      <div class="card">${rows.map((r, i) => { const q = P(r.id); return `<div class="rrow"><span class="pos">#${i + 1}</span>
+        <a class="who" href="#p/${enc(q.id)}">${av(q)}<span style="min-width:0"><b>${esc(nm(q))}</b><small>${stage(r)} ${r.second_date ? '<span class="tag mut">&#9829; mutual 2nd date</span>' : ''}</small></span></a>
+        ${meter(r.score)}${dateBtn(id, r.id, r.date)}<p class="why">${esc(r.why)}</p></div>`; }).join('') || '<p class="mute">Nobody to rank yet.</p>'}</div>`; },
 };
 
-function render(){ const [v, arg] = (location.hash.slice(1) || 'add').split('/');
-  document.querySelectorAll('header a').forEach(a=>a.classList.toggle('on', a.hash.slice(1)===v || (v==='p'&&a.hash==='#people') || (v==='d'&&a.hash==='#dates')));
-  if(v==='add' && $('#app').dataset.v==='add') return; // don't wipe the form while typing
-  $('#app').dataset.v = v; $('#app').innerHTML = (views[v]||views.add)(arg); }
-async function refresh(){ S = await fetch('/api/state').then(r=>r.json()); render(); }
-function addOne(){ api('/api/people',{people:[{linkedin:$('#li').value,instagram:$('#ig').value,li_text:$('#lit').value,ig_text:$('#igt').value,gender:$('#gen').value,seeking:$('#seek').value}]}).then(r=>r.ids&&(location.hash='people')); }
-function addBulk(){ const people = $('#bulk').value.trim().split('\n').map(l=>l.trim().split(/\s+/)).filter(x=>x.length>=2).map(([linkedin,instagram])=>({linkedin,instagram}));
-  api('/api/people',{people}).then(r=>r.ids&&(location.hash='people')); }
+function route() { const [v, ...rest] = (location.hash.slice(1) || 'add').split('/'); return [views[v] ? v : 'add', decodeURIComponent(rest.join('/'))]; }
+function chrome() {
+  const [v] = route(), tab = {p: 'people', d: 'dates'}[v] || v, pl = S.pipeline || {}, live = Object.values(S.dates).filter(d => isWork(d.status)).length;
+  document.querySelectorAll('nav a').forEach(a => a.classList.toggle('on', a.hash.slice(1) === tab));
+  $('#n-people').textContent = Object.keys(S.people).length;
+  $('#n-dates').innerHTML = live ? `<span style="display:inline-flex;gap:4px;align-items:center"><i class="dot" style="color:var(--acc)"></i>${live} live</span>` : Object.keys(S.dates).length;
+  const pipe = pl.running ? `<div class="pipe"><div class="bar-in"><span class="spin"></span><b>Pipeline running</b><span>${esc(pl.step || 'starting…')}</span><span class="grow"></span>${steps()}</div></div>` : '';
+  if ($('#pipe').innerHTML !== pipe) $('#pipe').innerHTML = pipe;
+}
+function render() {
+  chrome();
+  const [v, arg] = route(), key = v + '/' + arg, app = $('#app'), changed = key !== lastRoute;
+  if (v === 'add' && !changed) return;  // never wipe the form while the user is typing
+  const html = views[v](arg);
+  if (!changed && html === lastHTML) return;  // nothing new: keep DOM, scroll, expanded sections
+  const keep = {}; app.querySelectorAll('select[id],input[id],textarea[id]').forEach(e => keep[e.id] = e.value);
+  const oc = $('#chat'), top = oc && !changed ? oc.scrollTop : null;
+  app.innerHTML = html; lastHTML = html; lastRoute = key;
+  if (!changed) for (const k in keep) { const e = document.getElementById(k); if (e && (e.tagName !== 'SELECT' || [...e.options].some(o => o.value === keep[k]))) e.value = keep[k]; }
+  if (changed) { app.classList.remove('enter'); void app.offsetWidth; app.classList.add('enter'); clearTimeout(enterT); enterT = setTimeout(() => app.classList.remove('enter'), 1100); scrollTo(0, 0); }
+  const c = $('#chat'); if (c) { if (top != null) c.scrollTop = top; c.scrollTo({top: c.scrollHeight, behavior: changed ? 'auto' : 'smooth'}); }
+}
+async function refresh() {
+  if (busy) return; busy = true;
+  try { const t = await fetch('/api/state').then(r => r.text());
+    if (t !== lastJSON) { lastJSON = t; const s = JSON.parse(t);
+      S = {...s, people: s.people || {}, dates: s.dates || {}, rankings: s.rankings || {}, pipeline: s.pipeline || {running: false, step: ''}}; render(); }
+  } catch (e) { /* server restarting: try again next tick */ } finally { busy = false; }
+}
+function toast(msg, bad) { const t = $('#toast'); t.textContent = msg; t.className = 'on' + (bad ? ' bad' : ''); clearTimeout(t._t); t._t = setTimeout(() => t.className = '', 3200); }
+async function api(path, body) {
+  try { const r = await fetch(path, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body || {})});
+    const j = await r.json().catch(() => ({error: 'HTTP ' + r.status}));
+    if (!r.ok || j.error) { toast(j.error || 'HTTP ' + r.status, true); return null; }
+    lastJSON = ''; refresh(); return j;
+  } catch (e) { toast(String(e), true); return null; }
+}
+const goDate = async (a, b) => { if (!a || !b || a === b) return toast('Pick two different agents', true); const r = await api('/api/date', {a, b}); if (r?.id) location.hash = 'd/' + encodeURIComponent(r.id); };
+const person = id => `/api/people/${encodeURIComponent(id)}/`;
+document.addEventListener('click', async e => {
+  const t = e.target.closest('[data-act]'); if (!t) return; const a = t.dataset;
+  if (a.act === 'clamp') return t.classList.toggle('open');
+  if (t.tagName === 'BUTTON') { if (t.disabled) return; t.disabled = true; setTimeout(() => t.disabled = false, 1500); }
+  switch (a.act) {
+    case 'run': if (await api('/api/run')) toast('Pipeline started: search → date → rank'); break;
+    case 'date': await goDate(a.a, a.b); break;
+    case 'pick': await goDate($('#da').value, $('#db').value); break;
+    case 'analyze': if (await api(person(a.id) + 'analyze')) toast('The agent is re-reading its person…'); break;
+    case 'search': if (await api(person(a.id) + 'search')) toast('The agent is searching the pool…'); break;
+    case 'del': if (confirm(`Delete ${a.name}'s agent and its dates?`) && await api(person(a.id) + 'delete')) location.hash = 'people'; break;
+    case 'addOne': { const g = k => $('#' + k).value.trim();
+      if (!g('li') || !g('ig')) return toast('Both a LinkedIn and an Instagram URL are needed', true);
+      if (await api('/api/people', {people: [{linkedin: g('li'), instagram: g('ig'), li_text: g('lit'), ig_text: g('igt'), gender: g('gen'), seeking: g('seek')}]})) { toast('Agent created. It is reading its person now.'); location.hash = 'people'; }
+      break; }
+    case 'addBulk': { const people = $('#bulk').value.split('\n').map(l => l.trim().split(/[\s,;]+/).filter(Boolean)).filter(x => x.length >= 2)
+        .map(x => ({linkedin: x.find(u => /linkedin\.com/i.test(u)) || x[0], instagram: x.find(u => /instagram\.com/i.test(u)) || x[1]}));
+      if (!people.length) return toast('One person per line: linkedin_url instagram_url', true);
+      const r = await api('/api/people', {people}); if (r) { toast(`${(r.ids || []).length} agents created`); location.hash = 'people'; }
+      break; }
+  }
+});
 window.onhashchange = render;
-refresh(); setInterval(()=>{ if(!['add'].includes(location.hash.slice(1)||'add')) refresh(); }, 1500);
+render(); refresh(); setInterval(refresh, 1500);
 </script>
 </body>
 </html>
