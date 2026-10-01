@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: proxy-hearts
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m app
+    envVars:
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: APIFY_TOKEN
+        sync: false
+      - key: MODEL
+        value: anthropic/claude-opus-5.5
