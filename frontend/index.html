@@ -670,6 +670,7 @@ function planSection(d, A, Bp, bubble) {
     ${isErr(pl.status) ? `<div class="err">${esc(pl.status)}</div>` : ''}${ticket}</div>`;
 }
 
+const kicked = {};
 const views = {
   welcome() { const us = users();
     return B('hero', `<div class="welcome-page"><div class="hero"><div>
@@ -783,6 +784,7 @@ const views = {
   },
 
   d(id, fresh) { if (!loaded) return loading(); const d = S.dates[id];
+    if (d?.pending && !kicked[id]) { kicked[id] = 1; api(`/api/dates/${encodeURIComponent(id)}/run`); } // serverless host: start the chat now
     if (!d) return B('nf', empty('Date not found', 'It may have been removed.', '<a class="btn ghost" href="#dates">All dates</a>'));
     const A = P(d.a), Bp = P(d.b), t = arr(d.transcript), from = fresh || seenChat[id] == null ? t.length : seenChat[id];
     seenChat[id] = t.length;

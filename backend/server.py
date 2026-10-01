@@ -12,7 +12,7 @@ POST /api/date                      {a, b}                → two agents chat, t
 POST /api/run                       everyone searches, dates and gets ranked
 POST /api/chat                      {to, from, text}      → chat live with a person's agent; returns {reply}
 POST /api/dates/<id>/plan           the two agents set up the first date (check availability, agree on a plan)"""
-import json, re, sys, threading, time, urllib.parse
+import json, re, sys, time, urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from .agents.dater import SLOTS, chat, plan_first_date, run_date, start_date
@@ -21,7 +21,7 @@ from .agents.matcher import ranking, search
 from .agents.reader import analyze
 from .config import FRONTEND, HUNT_MAX, HUNT_TARGET, PORT, ROOT
 from .pipeline import run_everyone
-from .store import lock, new_person, pool, save, state
+from .store import lock, new_person, pool, reload, save, state
 from .tools.instagram import ig_handle
 from .tools.linkedin import li_slug
 from .tools.person import read_person
@@ -103,6 +103,7 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(data)
 
     def do_GET(self):
+        reload()
         if self.path == "/api/state":
             with lock:
                 snap = json.loads(json.dumps(state))
@@ -116,6 +117,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send(404, {"error": "not found"})
 
     def do_POST(self):
+        reload()
         try:
             body = json.loads(self.rfile.read(int(self.headers.get("Content-Length") or 0)) or b"{}")
             path = self.path
@@ -157,12 +159,19 @@ class Handler(BaseHTTPRequestHandler):
                 d["plan"] = {"status": "planning", "transcript": [], "result": None}
                 pool.submit(plan_first_date, d["id"])
                 return self.send(200, {})
+            if m := re.fullmatch(r"/api/dates/(\w+)/run", path):  # serverless: run a created chat in this request
+                d = state["dates"].get(m.group(1))
+                if d and d.get("pending"):
+                    d["pending"] = False
+                    save()
+                    pool.submit(run_date, d["id"])
+                return self.send(200, {})
             if path == "/api/chat":
                 return self.send(200, {"reply": chat(body.get("to"), body.get("from"), body.get("text"))})
             if path == "/api/run":
                 if not state["pipeline"]["running"]:
                     state["pipeline"].update(running=True, step="starting")
-                    threading.Thread(target=run_everyone, daemon=True).start()
+                    pool.submit(run_everyone)
                 return self.send(200, {})
             self.send(404, {"error": "not found"})
         except Exception as e:

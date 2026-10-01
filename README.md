@@ -53,6 +53,17 @@ python -m backend           # open http://localhost:8000
 
 Optional: `MODEL` (default `nvidia/nemotron-3-super-120b-a12b:free`, with `qwen/qwen3.8-27b:free` as fallback), `PORT`, `BUDGET_USD`, `MAX_CALLS`.
 
+### Deploy on Vercel
+
+1. Import the GitHub repo in Vercel (no build settings needed; `vercel.json` + `api/index.py` are included).
+2. **Storage → Create → Upstash Redis** (free) and connect it to the project. This stores people, chats and rankings,
+   because Vercel's disk doesn't persist between requests. `KV_REST_API_URL` and `KV_REST_API_TOKEN` are added automatically.
+3. **Settings → Environment Variables:** add `OPENROUTER_API_KEY`, `SERPER_API_KEY` and `APIFY_TOKEN`. Apify matters on
+   Vercel because LinkedIn and Instagram block cloud IPs. Then redeploy.
+
+On Vercel, agent work runs inside the request (up to 5 minutes) instead of in background threads. The page polls the
+shared state, so chats still appear live. Very long jobs (a 25-person hunt, "Run everyone") are better run locally.
+
 Run the tests with `python tests/test_core.py`. To see what the tools fetch for any person (no AI involved), run `python -m backend --scrape <linkedin_url> <instagram_url>`.
 
 ---
@@ -88,6 +99,7 @@ Run the tests with `python tests/test_core.py`. To see what the tools fetch for 
 ├── tests/test_core.py
 ├── .env.example              ← copy to .env, add keys
 ├── requirements.txt          ← just pydantic; the rest is the Python standard library
+├── api/index.py + vercel.json ← Vercel deployment
 └── render.yaml               ← one-click deploy to Render
 ```
 

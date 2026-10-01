@@ -5,11 +5,11 @@ once, ever: the hunter's read and that person's own agent share it, and it survi
 blocks, and no repeated Apify cost)."""
 import json, threading
 
-from ..config import ROOT
+from ..config import TMP
 from .instagram import ig_handle, read_instagram
 from .linkedin import li_slug, read_linkedin
 
-CACHE_FILE = ROOT / "data" / "scrape_cache.json"
+CACHE_FILE = TMP / "scrape_cache.json"
 _lock = threading.Lock()
 _cache = json.loads(CACHE_FILE.read_text("utf8")) if CACHE_FILE.exists() else {}
 

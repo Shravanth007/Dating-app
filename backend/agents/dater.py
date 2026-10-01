@@ -6,7 +6,7 @@ from pydantic import BaseModel
 
 from ..config import DATE_TURNS
 from ..llm import ask
-from ..store import lock, pool, save, state
+from ..store import ON_VERCEL, lock, pool, save, state
 
 
 class Verdict(BaseModel):
@@ -175,6 +175,8 @@ def start_date(a, b):
                 return d["id"], None
         did = uuid.uuid4().hex[:8]
         state["dates"][did] = {"id": did, "a": a, "b": b, "venue": "", "transcript": [], "verdicts": {},
-                               "status": "on the date"}
+                               "status": "on the date", "pending": ON_VERCEL}
     save()
+    if ON_VERCEL:  # serverless: the chat page calls /api/dates/<id>/run, which runs the chat inside that request
+        return did, None
     return did, pool.submit(run_date, did)
