@@ -21,7 +21,7 @@ def test_ranking():
         "b": {"id": "b", "profile": prof, "seeking": "everyone", "gender": ""},
         "c": {"id": "c", "profile": prof, "seeking": "everyone", "gender": ""},
         "d": {"id": "d", "profile": prof, "seeking": "women", "gender": "man"}}  # d only dates women → excluded for a
-    verdict = lambda s: {"score": s, "summary": "", "second_date": True}
+    verdict = lambda s: {"score": s, "summary": "", "wants_to_meet": True}
     dates = {"x": {"id": "x", "a": "a", "b": "c", "status": "done", "verdicts": {"a": verdict(80), "c": verdict(90)}}}
     rows = ranking("a", people, dates)
     assert [(r["id"], r["score"], r["stage"]) for r in rows] == [("c", 84, "dated"), ("b", 70, "pre-date")], rows

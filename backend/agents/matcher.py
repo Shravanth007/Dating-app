@@ -71,8 +71,8 @@ def ranking(pid, people, dates):
         if d:
             mine, theirs = d["verdicts"][pid], d["verdicts"][q["id"]]
             rows.append({"id": q["id"], "score": round(0.6 * mine["score"] + 0.4 * theirs["score"]), "stage": "dated",
-                         "date": d["id"], "why": mine["summary"], "second_date": mine["second_date"] and theirs["second_date"]})
+                         "date": d["id"], "why": mine["summary"], "wants_to_meet": mine["wants_to_meet"] and theirs["wants_to_meet"]})
         elif q["id"] in fits:
             rows.append({"id": q["id"], "score": fits[q["id"]]["fit"], "stage": "pre-date", "date": None,
-                         "why": fits[q["id"]]["reason"], "second_date": False})
+                         "why": fits[q["id"]]["reason"], "wants_to_meet": False})
     return sorted(rows, key=lambda r: r["score"], reverse=True)

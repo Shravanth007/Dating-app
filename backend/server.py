@@ -7,13 +7,14 @@ POST /api/people                    {people:[{linkedin, instagram, li_text?, ig_
 POST /api/people/<id>/analyze       re-read the person
 POST /api/people/<id>/search        re-run the person's search
 POST /api/people/<id>/delete
-POST /api/date                      {a, b}                → send two agents on a date
+POST /api/date                      {a, b}                → two agents chat, then debrief
 POST /api/run                       everyone searches, dates and gets ranked
-POST /api/chat                      {to, from, text}      → chat live with a person's agent; returns {reply}"""
+POST /api/chat                      {to, from, text}      → chat live with a person's agent; returns {reply}
+POST /api/dates/<id>/plan           the two agents set up the first date (check availability, agree on a plan)"""
 import json, re, sys, threading, urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from .agents.dater import chat, run_date, start_date
+from .agents.dater import SLOTS, chat, plan_first_date, run_date, start_date
 from .agents.hunter import hunt
 from .agents.matcher import ranking, search
 from .agents.reader import analyze
@@ -69,6 +70,7 @@ def onboard(a):
         "relationship_goal": clean(a.get("relationship_goal"), 80), "about": clean(a.get("about"), 1500),
         "interests": clean_list(a.get("interests")),
         "lifestyle": {k: clean(lifestyle.get(k), 60) for k in ("drinking", "smoking", "exercise", "kids")},
+        "availability": [x for x in clean_list(a.get("availability")) if x in SLOTS],
         "looking_for_traits": clean_list(a.get("looking_for_traits")), "dealbreakers": clean_list(a.get("dealbreakers")),
         "prompts": {k: clean(prompts.get(k), 500) for k in ("ideal_sunday", "green_flag", "perfect_date")},
         "linkedin": li, "instagram": ig}
@@ -133,6 +135,15 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send(200, {})
             if path == "/api/date":
                 return self.send(200, {"id": start_date(body["a"], body["b"])[0]})
+            if m := re.fullmatch(r"/api/dates/(\w+)/plan", path):
+                d = state["dates"].get(m.group(1))
+                if not d or d["status"] != "done":
+                    raise ValueError("The chat has to finish first")
+                if (d.get("plan") or {}).get("status") == "planning":
+                    raise ValueError("The agents are already planning")
+                d["plan"] = {"status": "planning", "transcript": [], "result": None}
+                pool.submit(plan_first_date, d["id"])
+                return self.send(200, {})
             if path == "/api/chat":
                 return self.send(200, {"reply": chat(body.get("to"), body.get("from"), body.get("text"))})
             if path == "/api/run":

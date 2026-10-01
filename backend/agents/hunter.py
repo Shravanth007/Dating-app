@@ -5,7 +5,7 @@ It is a tool-using agent with three tools:
   read_person(linkedin_url, instagram_url)  read BOTH public profiles of one person, to judge the fit
   recruit(...)                           add someone it judged a real match (only after reading both, both public)
 Each recruit gets their own agent (the reader builds it from the same LinkedIn + Instagram data). Then the user's agent
-scores the pool and goes on live dates, one at a time, with its top matches, and ranks them."""
+scores the pool and chats with its top matches one at a time, and sets up first dates, and ranks them."""
 import json
 
 from ..config import DATES_PER_USER, HUNT_MAX_SEARCHES, HUNT_MAX_STEPS, HUNTER_MODEL
@@ -15,7 +15,7 @@ from ..tools.instagram import ig_handle
 from ..tools.linkedin import li_slug
 from ..tools.person import already_read, read_person
 from ..tools.web_search import web_search
-from .dater import persona, start_date
+from .dater import persona, plan_first_date, start_date
 from .matcher import card, ranking, search
 from .reader import analyze
 
@@ -123,14 +123,21 @@ def hunt(uid, count):
         if not top:
             raise ValueError("nobody compatible in the pool yet")
         for i, m in enumerate(top, 1):  # one live date at a time, so there is always exactly one to watch
-            h["step"] = f"on a date ({i}/{len(top)})"
-            say(f"💘 date {i}/{len(top)} with {state['people'][m['id']]['name']} (pre-date fit {m['fit']})")
+            h["step"] = f"chatting ({i}/{len(top)})"
+            say(f"💬 chat {i}/{len(top)} with {state['people'][m['id']]['name']} (pre-date fit {m['fit']})")
             did, future = start_date(uid, m["id"])
             if future:
                 future.result()
             d = state["dates"][did]
             if d["status"] == "done":
-                say(f"   {d['verdicts'][uid]['score']}/100 · second date: {'yes' if d['verdicts'][uid]['second_date'] else 'no'}")
+                v = d["verdicts"]
+                say(f"   {v[uid]['score']}/100 · wants to meet: {'yes' if v[uid]['wants_to_meet'] else 'no'}")
+                if all(x["wants_to_meet"] for x in v.values()):
+                    say(f"📅 Both want to meet: setting up the first date with {state['people'][m['id']]['name']}'s agent…")
+                    plan_first_date(did)
+                    r = d["plan"].get("result") or {}
+                    if r.get("agreed"):
+                        say(f"🗓️ First date set: {r['day']} {r['date']}, {r['time']} · {r['place']}")
         rows = ranking(uid, state["people"], state["dates"])
         if rows:
             say(f"🏆 Best match: {state['people'][rows[0]['id']]['name']} ({rows[0]['score']}/100). {rows[0]['why']}")

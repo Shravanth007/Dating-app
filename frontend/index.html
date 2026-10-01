@@ -362,6 +362,11 @@ html:has(.welcome-page),body:has(.welcome-page){overflow:hidden}
 @keyframes blink{0%,60%,100%{opacity:.3}30%{opacity:1}}
 nav.tabs .n[hidden]{display:none}
 .err:empty{display:none}
+.ticket{display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:center;margin-top:16px;padding:16px 18px;border-radius:18px;background:linear-gradient(120deg,rgba(255,45,135,.16),rgba(255,176,46,.08));border:1px solid rgba(255,45,135,.35)}
+.ticket .when{display:flex;flex-direction:column;align-items:center;min-width:92px;padding-right:18px;border-right:1px dashed rgba(255,255,255,.18)}
+.ticket .when b{font-family:var(--serif);font-weight:400;font-size:26px}.ticket .when span{color:var(--mute);font-size:13px}
+.ticket .what b{display:block;font-size:16px}.ticket .what span{color:var(--ink2);font-size:14px}
+@media(max-width:560px){.ticket{grid-template-columns:1fr}.ticket .when{flex-direction:row;gap:10px;border-right:0;padding:0}}
 html,body{overflow-x:hidden}
 @media(max-width:860px){
   main:has(.welcome-page){padding-top:14px;padding-bottom:0}
@@ -389,7 +394,7 @@ html,body{overflow-x:hidden}
     <nav class="tabs" aria-label="Main">
       <a href="#me" data-tab="me"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>Me</a>
       <a href="#pool" data-tab="pool"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="9" r="3.2"/><circle cx="17" cy="10" r="2.6"/><path d="M3 20c1-3.5 3.3-5 6-5s5 1.5 6 5M15.5 15.2c2.6-.4 4.6.9 5.5 3.8"/></svg>Pool<span class="n" id="n-pool" hidden></span></a>
-      <a href="#dates" data-tab="dates"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"/></svg>Dates<span class="n" id="n-dates" hidden></span></a>
+      <a href="#dates" data-tab="dates"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"/></svg>Chats<span class="n" id="n-dates" hidden></span></a>
       <a href="#rank" data-tab="rank"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 20V11M12 20V5M18 20v-6"/></svg>Rankings</a>
       <a href="#add" data-tab="add"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Add</a>
     </nav>
@@ -496,12 +501,12 @@ function logFeed(p, fresh) {
 }
 function dateCard(d, focus) {
   const A = P(d.a), Bp = P(d.b), va = d.verdicts?.[d.a], vb = d.verdicts?.[d.b], t = arr(d.transcript), last = t[t.length - 1], live = isWork(d.status);
-  const mutual = va && vb && va.second_date && vb.second_date;
+  const mutual = va && vb && va.wants_to_meet && vb.wants_to_meet;
   return `<a class="card dcard ${live ? 'live working' : ''}" href="#d/${enc(d.id)}">
     <div class="row"><span class="pair">${av(A, 'lg')}${av(Bp, 'lg')}</span><span class="grow"></span>${pill(d.status)}</div>
     <div><div class="names">${esc(nm(A))} &amp; ${esc(nm(Bp))}</div><div class="small mute">${esc(d.venue || 'Picking a place…')}</div></div>
     ${live && last ? `<div class="last">${esc(first(P(last.who)))}'s agent: “${esc(String(last.text || '').replace(/\*/g, ''))}”</div>` : ''}
-    ${va && vb ? `<div class="sc">${num(va.score)}<span style="color:var(--acc);font-size:16px">&#9829;</span>${num(vb.score)}${mutual ? '<span class="tag p" style="font-family:var(--sans);margin-left:auto">Both want a second date</span>' : ''}</div>`
+    ${va && vb ? `<div class="sc">${num(va.score)}<span style="color:var(--acc);font-size:16px">&#9829;</span>${num(vb.score)}${mutual ? '<span class="tag p" style="font-family:var(--sans);margin-left:auto">Both want to meet</span>' : ''}</div>`
       : `<div class="small mute">${t.length} message${t.length === 1 ? '' : 's'}</div>`}</a>`;
 }
 function rankRows(id) {
@@ -509,7 +514,7 @@ function rankRows(id) {
   if (!rows.length) return '<p class="mute">Nobody ranked yet. Rankings appear once the agent has searched or dated.</p>';
   return rows.map((r, i) => { const q = P(r.id);
     return `<div class="rrow"><span class="pos">${i + 1}</span>
-      <a class="who" href="#p/${enc(q.id)}">${av(q)}<span style="min-width:0"><b>${esc(nm(q))}</b><span class="row" style="gap:6px;margin-top:4px">${stageB(r)}${r.second_date ? '<span class="tag p">Wants a second date</span>' : ''}</span></span></a>
+      <a class="who" href="#p/${enc(q.id)}">${av(q)}<span style="min-width:0"><b>${esc(nm(q))}</b><span class="row" style="gap:6px;margin-top:4px">${stageB(r)}${r.wants_to_meet ? '<span class="tag p">Wants to meet</span>' : ''}</span></span></a>
       ${ring(r.score, 58)}<span class="acts">${dateBtn(id, r.id, r.date)}</span>
       <p class="why">${esc(r.why)}</p></div>`; }).join('');
 }
@@ -523,13 +528,14 @@ const OPT = {
   looking_for_traits: ['Ambitious', 'Kind', 'Funny', 'Adventurous', 'Creative', 'Intellectual', 'Family-oriented', 'Spiritual', 'Outdoorsy', 'Entrepreneurial', 'Calm', 'Social', 'Romantic', 'Health-focused'],
   dealbreakers: ['Smoking', 'Heavy drinking', 'Wants kids', "Doesn't want kids", 'Long distance', 'Rudeness to staff', 'Different politics', 'No ambition'],
   goals: ['Long-term partner', 'Long-term, open to short', 'Short-term fun', 'Figuring it out', 'New friends'],
+  availability: ['Weekday evenings', 'Weekday lunch', 'Saturdays', 'Sundays'],
   drinking: ['Never', 'Socially', 'Often'], smoking: ['No', 'Sometimes', 'Yes'], exercise: ['Never', 'Sometimes', 'Often', 'Daily'],
   kids: ["Don't have, want", "Don't have, don't want", 'Have kids', 'Not sure']
 };
 const GENDERS = [['man', 'Man'], ['woman', 'Woman'], ['nonbinary', 'Non-binary']];
 const SEEK = [['men', 'Men'], ['women', 'Women'], ['everyone', 'Everyone']];
 const blankOb = () => ({name: '', age: '', gender: '', city: '', interested_in: '', age_min: 24, age_max: 38, relationship_goal: '', photo: '', about: '', interests: [],
-  lifestyle: {drinking: '', smoking: '', exercise: '', kids: ''}, looking_for_traits: [], dealbreakers: [], prompts: {ideal_sunday: '', green_flag: '', perfect_date: ''}, linkedin: '', instagram: ''});
+  lifestyle: {drinking: '', smoking: '', exercise: '', kids: ''}, availability: [], looking_for_traits: [], dealbreakers: [], prompts: {ideal_sunday: '', green_flag: '', perfect_date: ''}, linkedin: '', instagram: ''});
 let ob = (() => { try { const d = JSON.parse(LS.get('ph_draft') || 'null'); if (d && typeof d === 'object') { const b = blankOb();
   return {...b, ...d, lifestyle: {...b.lifestyle, ...(d.lifestyle || {})}, prompts: {...b.prompts, ...(d.prompts || {})}}; } } catch (e) { /* bad draft */ } return blankOb(); })();
 let obStep = 0, obDir = '', obErr = '';
@@ -560,7 +566,8 @@ const OB = [
       ${ob.photo ? '<p style="margin-top:14px"><button type="button" class="linkish" data-act="rmphoto">Remove photo</button></p>' : ''}`, ok: () => ''},
   {t: 'About you', w: 'Write it the way you talk. Your agent borrows your voice.', b: () => area('about', 'A few lines about you', 'Product designer, weekend climber, makes a serious lasagna…', 4) + grp('Interests', many('interests', OPT.interests)), ok: () => ''},
   {t: 'Lifestyle', w: 'The practical stuff, so your agent can skip the mismatches.', b: () => grp('Drinking', one('lifestyle.drinking', OPT.drinking)) + grp('Smoking', one('lifestyle.smoking', OPT.smoking))
-      + grp('Exercise', one('lifestyle.exercise', OPT.exercise)) + grp('Kids', one('lifestyle.kids', OPT.kids)), ok: () => ''},
+      + grp('Exercise', one('lifestyle.exercise', OPT.exercise)) + grp('Kids', one('lifestyle.kids', OPT.kids))
+      + grp('When are you usually free? (your agent books dates in these slots)', many('availability', OPT.availability)), ok: () => ''},
   {t: 'Your type', w: 'What your agent should hunt for, and what it should walk away from.', b: () => grp('Traits I am looking for', many('looking_for_traits', OPT.looking_for_traits)) + grp('Dealbreakers', many('dealbreakers', OPT.dealbreakers)), ok: () => ''},
   {t: 'Three prompts', w: 'Your agent brings these up on dates.', b: () => area('prompts.ideal_sunday', 'My ideal Sunday…', 'Farmers market, long run, too much coffee.', 2)
       + area('prompts.green_flag', 'A green flag I look for…', 'Asks a follow-up question.', 2) + area('prompts.perfect_date', 'The perfect first date…', 'Natural wine bar, then a walk with no plan.', 2), ok: () => ''},
@@ -617,7 +624,7 @@ function phoneDate() {
   const ex = !d, A = ex ? EXAMPLE_DATE.a : P(d.a), Bp = ex ? EXAMPLE_DATE.b : P(d.b);
   const lines = ex ? EXAMPLE_DATE.lines.map(([w, t]) => ({side: w === 'a' ? 'l' : 'r', who: w === 'a' ? A : Bp, text: t}))
     : d.transcript.slice(-4).map(t => ({side: t.who === d.a ? 'l' : 'r', who: P(t.who), text: t.text}));
-  const live = !ex && d.status === 'on the date', label = ex ? 'on a date' : live ? 'Live now' : 'Latest date';
+  const live = !ex && d.status === 'on the date', label = ex ? 'chatting' : live ? 'chatting now' : 'latest chat';
   const inner = `<div class="island"></div>
     <div class="status"><b>9:41</b><i class="notch-gap"></i><span class="icons" aria-hidden="true"><svg width="17" height="11" viewBox="0 0 17 11"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg><svg width="15" height="11" viewBox="0 0 15 11"><path d="M7.5 2.2c2.2 0 4.2.8 5.7 2.2l1.1-1.2A9.9 9.9 0 0 0 7.5.5 9.9 9.9 0 0 0 .7 3.2l1.1 1.2a8.3 8.3 0 0 1 5.7-2.2zm0 3.3c1.3 0 2.5.5 3.4 1.3l1.1-1.2a6.6 6.6 0 0 0-9 0l1.1 1.2c.9-.8 2.1-1.3 3.4-1.3zm0 3.3c.5 0 .9.2 1.2.5L7.5 10.6 6.3 9.3c.3-.3.7-.5 1.2-.5z"/></svg><svg width="26" height="12" viewBox="0 0 26 12"><rect x=".5" y=".5" width="22" height="11" rx="3.2" fill="none" stroke="currentColor" opacity=".45"/><rect x="2.2" y="2.2" width="16.5" height="7.6" rx="2"/><path d="M24 4v4c.8-.3 1.3-1.1 1.3-2S24.8 4.3 24 4z" opacity=".5"/></svg></span></div>
     <div class="apphead"><span class="back">‹</span><span class="pair">${av(A, 'sm')}${av(Bp, 'sm')}</span>
@@ -638,6 +645,29 @@ function chatPanel(p) { // talk live with this person's agent; it answers in the
       || `<p class="mute small">Say hi. ${esc(first(p))}'s agent will reply in their voice.</p>`}
       ${chatBusy === p.id ? `<div class="msg l typing">${av(p, 'sm')}<div class="bub"><i></i><i></i><i></i></div></div>` : ''}</div>
     <form class="row" data-chat="${esc(p.id)}" style="margin-top:12px;flex-wrap:nowrap"><input name="t" maxlength="800" autocomplete="off" placeholder="Message ${esc(first(p))}'s agent…" style="flex:1" ${chatBusy ? 'disabled' : ''}><button class="primary" ${chatBusy ? 'disabled' : ''}>Send</button></form></div>`;
+}
+
+function icsHref(r, A, B) { // a downloadable calendar invite for the agreed plan
+  const m = String(r.time || '').match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i), d = String(r.date || '').replace(/-/g, '');
+  if (!/^\d{8}$/.test(d)) return '';
+  let h = m ? +m[1] : 0; if (m && /pm/i.test(m[3] || '') && h < 12) h += 12; if (m && /am/i.test(m[3] || '') && h === 12) h = 0;
+  const start = m ? `DTSTART:${d}T${String(h).padStart(2, '0')}${m[2] || '00'}00` : `DTSTART;VALUE=DATE:${d}`;
+  const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Proxy Hearts//EN', 'BEGIN:VEVENT', `UID:${d}-${Date.now()}@proxyhearts`, start,
+    `SUMMARY:First date: ${nm(A)} & ${nm(B)}`, `LOCATION:${String(r.place || '').replace(/[,;\n]/g, ' ')}`, `DESCRIPTION:${String(r.note || '').replace(/[,;\n]/g, ' ')}`, 'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
+  return 'data:text/calendar;charset=utf-8,' + encodeURIComponent(ics);
+}
+function planSection(d, A, Bp, bubble) {
+  const pl = d.plan, t = arr(pl?.transcript), r = pl?.result, run = pl?.status === 'planning';
+  const head = `<div class="sec-h" style="margin:0 0 10px"><div><h3>Setting up the first date</h3><p class="mute small">Both want to meet. The agents check availability and set it up for you.</p></div>${pl ? pill(run ? 'planning…' : pl.status === 'set' ? 'done' : pl.status) : ''}</div>`;
+  if (!pl) return `<div class="card">${head}<button class="primary" data-act="plan" data-id="${esc(d.id)}">Set up the first date</button></div>`;
+  const msgs = t.map(m => m.system ? `<div class="sys">${esc(m.system)}</div>` : bubble(P(m.who), m.who === d.a ? 'l' : 'r', esc(m.text).replace(/\*([^*]+)\*/g, '<em>$1</em>'))).join('');
+  const lastWho = [...t].reverse().find(m => m.who)?.who, next = lastWho === d.a ? Bp : A;
+  const ticket = r && r.agreed ? `<div class="ticket"><div class="when"><b>${esc(r.day || '')}</b><span>${esc(r.date || '')}</span></div>
+      <div class="what"><b>${esc(r.time || '')} · ${esc(r.place || '')}</b><span>${esc(r.note || '')}</span></div>
+      ${icsHref(r, A, Bp) ? `<a class="btn primary sm" download="first-date.ics" href="${icsHref(r, A, Bp)}">Add to calendar</a>` : ''}</div>`
+    : r ? '<p class="mute">They could not agree on a time yet.</p>' : '';
+  return `<div class="card">${head}<div class="chat autoscroll" style="max-height:none">${msgs}${run ? bubble(next, next.id === d.a ? 'l' : 'r', '<i></i><i></i><i></i>', 'typing') : ''}</div>
+    ${isErr(pl.status) ? `<div class="err">${esc(pl.status)}</div>` : ''}${ticket}</div>`;
 }
 
 const views = {
@@ -746,7 +776,7 @@ const views = {
   },
 
   dates() { if (!loaded) return loading(); const ds = liveFirst(Object.values(S.dates)), live = ds.filter(d => isWork(d.status)).length;
-    return B('top', `<div class="sec-h"><div><h2>Dates</h2><p class="mute">${ds.length} total${live ? `, ${live} happening now` : ''}. Each agent speaks only for its own person.</p></div></div>`)
+    return B('top', `<div class="sec-h"><div><h2>Chats &amp; first dates</h2><p class="mute">${ds.length} total${live ? `, ${live} happening now` : ''}. Each agent speaks only for its own person.</p></div></div>`)
     + B('grid', ds.length ? `<div class="grid">${ds.map(d => dateCard(d)).join('')}</div>`
       : empty('No dates yet', 'Send your agent hunting. It books dates with the people it finds.', `<a class="btn primary" href="${meP() ? '#me' : '#onboard'}">${meP() ? 'Go to my agent' : 'Create your agent'}</a>`));
   },
@@ -757,21 +787,22 @@ const views = {
     seenChat[id] = t.length;
     const lastWho = t.length ? t[t.length - 1].who : d.b, next = lastWho === d.a ? Bp : A;
     const bubble = (q, side, body, cls = '') => `<div class="msg ${side} ${cls}">${av(q, 'sm')}<div class="bub"><small>${esc(first(q))}'s agent</small>${body}</div></div>`;
-    const vs = [d.a, d.b].map(x => d.verdicts?.[x]), both = vs[0] && vs[1], mutual = both && vs[0].second_date && vs[1].second_date;
+    const vs = [d.a, d.b].map(x => d.verdicts?.[x]), both = vs[0] && vs[1], mutual = both && vs[0].wants_to_meet && vs[1].wants_to_meet;
     return B('head', `<div class="card dhead"><span class="pair">${av(A)}${av(Bp)}</span><div class="grow" style="min-width:200px">
         <h2><a href="#p/${enc(d.a)}" style="text-decoration:none">${esc(nm(A))}</a> <span class="mute">&amp;</span> <a href="#p/${enc(d.b)}" style="text-decoration:none">${esc(nm(Bp))}</a></h2>
-        <div class="venue">${d.status === 'on the date' ? '<i class="dot" style="color:var(--acc)"></i>Live at' : 'At'} ${esc(d.venue || 'a place they are still picking')}</div></div>${pill(d.status)}</div>`)
+        <div class="venue">${d.status === 'on the date' ? '<i class="dot" style="color:var(--acc)"></i>Chatting live' : 'Their first chat'}${d.plan?.result?.agreed ? ` · first date set for ${esc(d.plan.result.day)}` : ''}</div></div>${pill(d.status)}</div>`)
     + B('chat', `<div class="card"><div class="chat autoscroll" aria-live="polite">${t.map((m, i) => bubble(P(m.who), m.who === d.a ? 'l' : 'r', esc(m.text).replace(/\*([^*]+)\*/g, '<em>$1</em>'), i >= from ? 'is-new' : '')).join('')
         || (isWork(d.status) ? '<div class="sys">The agents are sitting down…</div>' : '<div class="sys">No messages.</div>')}
         ${d.status === 'on the date' ? bubble(next, next.id === d.a ? 'l' : 'r', '<i></i><i></i><i></i>', 'typing') : ''}
         ${d.status === 'debriefing' ? '<div class="sys"><span class="spin"></span>Date over. Each agent is writing a private debrief.</div>' : ''}
         ${isErr(d.status) ? `<div class="err">${esc(d.status)}</div>` : ''}</div></div>`)
-    + (both ? B('mutual', `<div class="mutual ${mutual ? '' : 'no'}">${mutual ? 'It’s mutual. Both agents want a second date.' : 'No mutual second date this time.'}</div>`) : '')
+    + (both ? B('mutual', `<div class="mutual ${mutual ? '' : 'no'}">${mutual ? 'It’s a match. Both agents want to meet in person.' : 'Not mutual this time, so no first date.'}</div>`) : '')
     + (vs.some(Boolean) || d.status === 'debriefing' ? B('debriefs', `<div class="two">${[A, Bp].map((q, i) => { const v = vs[i], o = i ? A : Bp;
         return v ? `<div class="card deb"><h3>${esc(first(q))}'s agent on ${esc(first(o))}</h3><div class="top">${ring(v.score, 84)}<div class="grow">
-            <span class="tag ${v.second_date ? 'p' : ''}">${v.second_date ? 'Wants a second date' : 'No second date'}</span><p style="margin-top:10px">${esc(v.summary)}</p></div></div>
+            <span class="tag ${v.wants_to_meet ? 'p' : ''}">${v.wants_to_meet ? 'Wants to meet' : 'Not feeling it'}</span><p style="margin-top:10px">${esc(v.summary)}</p></div></div>
           ${v.chemistry ? `<p class="chem">${esc(v.chemistry)}</p>` : ''}<h4>Shared ground</h4>${tags(v.shared_ground, 'g')}<h4>Friction</h4>${tags(v.friction, 'r')}</div>`
-          : `<div class="card deb"><h3>${esc(first(q))}'s agent</h3><p class="mute">Writing a private debrief…</p><div class="skel"></div><div class="skel" style="width:80%"></div><div class="skel" style="width:55%"></div></div>`; }).join('')}</div>`) : '');
+          : `<div class="card deb"><h3>${esc(first(q))}'s agent</h3><p class="mute">Writing a private debrief…</p><div class="skel"></div><div class="skel" style="width:80%"></div><div class="skel" style="width:55%"></div></div>`; }).join('')}</div>`) : '')
+    + (mutual ? B('plan', planSection(d, A, Bp, bubble)) : '');
   },
 
   rank(id) { if (!loaded) return loading(); const ids = Object.keys(S.rankings || {}).filter(x => S.people[x] && arr(S.rankings[x]).length);
@@ -779,7 +810,7 @@ const views = {
     ids.sort((a, b) => (b === ME) - (a === ME) || (S.people[a].kind === 'user' ? -1 : 0) - (S.people[b].kind === 'user' ? -1 : 0));
     const pick = `<div class="picker"><a class="txt ${id ? '' : 'on'}" href="#rank">Everyone</a>${ids.map(x => `<a href="#rank/${enc(x)}" class="${x === id ? 'on' : ''}">${av(P(x), 'xs')}${esc(nm(P(x)))}</a>`).join('')}</div>`;
     if (!id || !S.rankings[id]) {
-      const mut = Object.values(S.dates).filter(d => d.verdicts?.[d.a]?.second_date && d.verdicts?.[d.b]?.second_date && S.people[d.a] && S.people[d.b]);
+      const mut = Object.values(S.dates).filter(d => d.verdicts?.[d.a]?.wants_to_meet && d.verdicts?.[d.b]?.wants_to_meet && S.people[d.a] && S.people[d.b]);
       return B('top', `<div class="sec-h"><div><h2>Who fits whom</h2><p class="mute">Dated pairs are scored from both private debriefs. Everyone else shows a pre-date estimate.</p></div></div>${pick}`)
       + (mut.length ? B('mut', `<div class="card brief"><h3 style="margin-bottom:14px">Mutual matches</h3><div class="mutuals">${mut.map(d => `<a href="#d/${enc(d.id)}"><span class="pair">${av(P(d.a), 'sm')}${av(P(d.b), 'sm')}</span>${esc(first(P(d.a)))} &amp; ${esc(first(P(d.b)))}<span style="color:var(--acc2)">${num(d.verdicts[d.a].score)} / ${num(d.verdicts[d.b].score)}</span></a>`).join('')}</div></div>`) : '')
       + B('grid', `<div class="grid">${ids.map(x => `<a class="card top3" href="#rank/${enc(x)}" style="text-decoration:none"><div class="row">${av(P(x))}<div class="grow"><b>${esc(nm(P(x)))}</b><div class="small mute">${arr(S.rankings[x]).length} ranked${x === ME ? ', you' : ''}</div></div></div>
@@ -874,6 +905,7 @@ if (typeof document !== 'undefined' && document.getElementById('app')) {
     switch (a.act) {
       case 'obsubmit': return obSubmit();
       case 'hunt': if (await api(`/api/users/${encodeURIComponent(ME)}/hunt`, {count: huntCount})) toast(`Your agent is hunting for ${huntCount} people`); break;
+      case 'plan': if (await api(`/api/dates/${encodeURIComponent(a.id)}/plan`)) toast('The agents are setting up the first date'); break;
       case 'run': if (await api('/api/run')) toast('Everyone is running: search, date, rank'); break;
       case 'date': { const r = await api('/api/date', {a: a.a, b: a.b}); if (r?.id) location.hash = 'd/' + encodeURIComponent(r.id); break; }
       case 'analyze': if (await api(personApi(a.id) + 'analyze')) toast('The agent is re-reading their profile'); break;
