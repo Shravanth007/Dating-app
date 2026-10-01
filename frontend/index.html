@@ -341,8 +341,9 @@ html:has(.welcome-page),body:has(.welcome-page){overflow:hidden}
 .phone-wrap .phone{overflow:visible}.phone-wrap{position:relative}
 .phone::before,.phone::after{content:"";position:absolute;width:3px;background:#2a2a30;border-radius:2px}
 .phone::before{left:-10px;top:18%;height:9%;box-shadow:0 120% 0 #2a2a30}.phone::after{right:-10px;top:24%;height:14%}
-.phone .island{position:absolute;top:9px;left:50%;transform:translateX(-50%);width:96px;height:26px;background:#000;border-radius:20px;z-index:2}
-.phone .status{display:flex;justify-content:space-between;align-items:center;padding:13px 26px 6px 30px;font-size:14px;font-weight:600;letter-spacing:-.01em}
+.phone .island{position:absolute;top:9px;left:50%;transform:translateX(-50%);width:30%;height:26px;background:#000;border-radius:20px;z-index:2}
+.phone .status{display:grid;grid-template-columns:1fr 34% 1fr;align-items:center;padding:13px 18px 6px 22px;font-size:14px;font-weight:600;letter-spacing:-.01em}
+.phone .status b{justify-self:center}.phone .status .icons{justify-self:center}
 .phone .status .icons{display:flex;gap:6px;align-items:center;color:var(--ink)}.phone .status svg{fill:currentColor;display:block}
 .phone .apphead{display:flex;align-items:center;gap:10px;padding:10px 14px 12px;border-bottom:1px solid var(--line);background:#111114}
 .phone .apphead .back{font-size:26px;line-height:1;color:var(--acc)}
@@ -377,7 +378,7 @@ html,body{overflow-x:hidden}
   .welcome-page .sub{margin-top:12px}
   .phone-wrap{flex:1;min-height:0;align-items:flex-start}
   .phone{height:100%;max-height:560px;aspect-ratio:auto;width:min(292px,80vw);border-radius:44px}
-  .phone .island{width:78px;height:22px}
+  .phone .island{height:22px}
   .phone .apphead b{white-space:nowrap}
   .phone .pm .pb{font-size:12.5px}
 }
@@ -621,9 +622,9 @@ function phoneDate() {
   const ex = !d, A = ex ? EXAMPLE_DATE.a : P(d.a), Bp = ex ? EXAMPLE_DATE.b : P(d.b);
   const lines = ex ? EXAMPLE_DATE.lines.map(([w, t]) => ({side: w === 'a' ? 'l' : 'r', who: w === 'a' ? A : Bp, text: t}))
     : d.transcript.slice(-4).map(t => ({side: t.who === d.a ? 'l' : 'r', who: P(t.who), text: t.text}));
-  const live = !ex && d.status === 'on the date', label = ex ? 'Example date' : live ? 'Live now' : 'Latest date';
+  const live = !ex && d.status === 'on the date', label = ex ? 'on a date' : live ? 'Live now' : 'Latest date';
   const inner = `<div class="island"></div>
-    <div class="status"><b>9:41</b><span class="icons" aria-hidden="true"><svg width="17" height="11" viewBox="0 0 17 11"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg><svg width="15" height="11" viewBox="0 0 15 11"><path d="M7.5 2.2c2.2 0 4.2.8 5.7 2.2l1.1-1.2A9.9 9.9 0 0 0 7.5.5 9.9 9.9 0 0 0 .7 3.2l1.1 1.2a8.3 8.3 0 0 1 5.7-2.2zm0 3.3c1.3 0 2.5.5 3.4 1.3l1.1-1.2a6.6 6.6 0 0 0-9 0l1.1 1.2c.9-.8 2.1-1.3 3.4-1.3zm0 3.3c.5 0 .9.2 1.2.5L7.5 10.6 6.3 9.3c.3-.3.7-.5 1.2-.5z"/></svg><svg width="26" height="12" viewBox="0 0 26 12"><rect x=".5" y=".5" width="22" height="11" rx="3.2" fill="none" stroke="currentColor" opacity=".45"/><rect x="2.2" y="2.2" width="16.5" height="7.6" rx="2"/><path d="M24 4v4c.8-.3 1.3-1.1 1.3-2S24.8 4.3 24 4z" opacity=".5"/></svg></span></div>
+    <div class="status"><b>9:41</b><i class="notch-gap"></i><span class="icons" aria-hidden="true"><svg width="17" height="11" viewBox="0 0 17 11"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg><svg width="15" height="11" viewBox="0 0 15 11"><path d="M7.5 2.2c2.2 0 4.2.8 5.7 2.2l1.1-1.2A9.9 9.9 0 0 0 7.5.5 9.9 9.9 0 0 0 .7 3.2l1.1 1.2a8.3 8.3 0 0 1 5.7-2.2zm0 3.3c1.3 0 2.5.5 3.4 1.3l1.1-1.2a6.6 6.6 0 0 0-9 0l1.1 1.2c.9-.8 2.1-1.3 3.4-1.3zm0 3.3c.5 0 .9.2 1.2.5L7.5 10.6 6.3 9.3c.3-.3.7-.5 1.2-.5z"/></svg><svg width="26" height="12" viewBox="0 0 26 12"><rect x=".5" y=".5" width="22" height="11" rx="3.2" fill="none" stroke="currentColor" opacity=".45"/><rect x="2.2" y="2.2" width="16.5" height="7.6" rx="2"/><path d="M24 4v4c.8-.3 1.3-1.1 1.3-2S24.8 4.3 24 4z" opacity=".5"/></svg></span></div>
     <div class="apphead"><span class="back">‹</span><span class="pair">${av(A, 'sm')}${av(Bp, 'sm')}</span>
       <div class="grow"><b>${esc(first(A))} &amp; ${esc(first(Bp))}</b><small><i class="dot"></i>${label}</small></div></div>
     <div class="pchat"><div class="pvenue">📍 ${esc((ex ? EXAMPLE_DATE.venue : d.venue) || 'First date')}</div>${lines.map((m, i) => `<div class="pm ${m.side} m${i + 1}"><small>${esc(first(m.who))}'s agent</small><div class="pb">${esc(m.text).replace(/\*([^*]+)\*/g, '<em>$1</em>')}</div></div>`).join('')}
