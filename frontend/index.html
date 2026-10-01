@@ -331,7 +331,44 @@ details summary{cursor:pointer;color:var(--mute);font-weight:600;font-size:13.5p
   .card{padding:18px}
   .msg{max-width:90%}
 }
-.spend{margin-left:auto;font:600 12px/1 'JetBrains Mono',monospace;color:var(--mute);border:1px solid var(--line);border-radius:99px;padding:6px 10px;white-space:nowrap}.spend.over{color:#ff5c5c;border-color:#ff5c5c}
+main:has(.welcome-page){padding-bottom:12px}
+@media(min-width:861px){html:has(.welcome-page),body:has(.welcome-page){overflow:hidden}}
+.welcome-page{height:calc(100vh - 114px);min-height:600px;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden}
+.welcome-page .hero{flex:1}
+.welcome-page .hero{min-height:0;padding:0 0 20px}
+.hero>*{min-width:0}
+.phone-wrap{display:flex;justify-content:center}
+.phone{display:flex;flex-direction:column;width:min(330px,100%);height:min(610px,calc(100vh - 270px));min-height:440px;background:#0b0b0d;border:11px solid #1d1d21;border-radius:52px;box-shadow:0 0 0 1px #2c2c31,0 40px 90px -30px rgba(255,45,135,.35);position:relative;overflow:hidden;color:var(--ink);text-decoration:none}
+.phone .island{position:absolute;top:9px;left:50%;transform:translateX(-50%);width:96px;height:26px;background:#000;border-radius:20px;z-index:2}
+.phone .status{display:flex;justify-content:space-between;align-items:center;padding:12px 24px 4px;font-size:13px}
+.phone .status span{display:flex;gap:5px;align-items:center}
+.phone .status i{display:block;background:var(--ink);border-radius:2px}
+.phone .sig{width:16px;height:9px;clip-path:polygon(0 100%,100% 0,100% 100%)}.phone .wifi{width:13px;height:9px;border-radius:9px 9px 2px 2px!important}.phone .bat{width:22px;height:10px;border-radius:3px!important}
+.phone .apphead{display:flex;align-items:center;gap:10px;padding:10px 14px 12px;border-bottom:1px solid var(--line);background:#111114}
+.phone .apphead .back{font-size:26px;line-height:1;color:var(--acc)}
+.phone .apphead b{display:block;font-size:15px}
+.phone .apphead small{display:flex;align-items:center;gap:6px;color:var(--mute);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.phone .apphead .dot{color:var(--acc)}
+.phone .pair{display:flex}.phone .pair>*+*{margin-left:-10px}
+.phone .pchat{flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:10px;padding:14px 12px;overflow:hidden}
+.phone .pm{max-width:82%;opacity:0;animation:pop .5s var(--ease) forwards}
+.phone .pm small{display:block;font-size:10.5px;color:var(--mute);margin:0 8px 3px;font-weight:600}
+.phone .pm .pb{padding:8px 12px;border-radius:18px;font-size:13px;line-height:1.4;background:#1f1f24}
+.phone .pm.l{align-self:flex-start}.phone .pm.l .pb{border-bottom-left-radius:5px}
+.phone .pm.r{align-self:flex-end}.phone .pm.r small{text-align:right}.phone .pm.r .pb{background:var(--acc);color:#fff;border-bottom-right-radius:5px}
+.phone .pm.typing .pb{display:flex;gap:4px;padding:12px 14px}.phone .pm.typing .pb i{width:6px;height:6px;border-radius:50%;background:var(--mute);animation:blink 1.2s infinite}
+.phone .pm.typing .pb i:nth-child(2){animation-delay:.2s}.phone .pm.typing .pb i:nth-child(3){animation-delay:.4s}
+.phone .m1{animation-delay:.4s}.phone .m2{animation-delay:1.5s}.phone .m3{animation-delay:2.7s}.phone .m4{animation-delay:3.9s}.phone .m5{animation-delay:4.9s}
+.phone .pinput{display:flex;align-items:center;justify-content:space-between;margin:0 12px 8px;padding:10px 14px;border:1px solid var(--line2);border-radius:22px;color:var(--mute);font-size:13px}
+.phone .pinput i{font-style:normal;color:var(--acc)}
+.phone .homebar{width:120px;height:4px;border-radius:4px;background:#3a3a40;margin:2px auto 8px}
+@keyframes blink{0%,60%,100%{opacity:.3}30%{opacity:1}}
+nav.tabs .n[hidden]{display:none}
+.err:empty{display:none}
+html,body{overflow-x:hidden}
+@media(max-width:860px){.welcome-page{height:auto;min-height:0;display:block;overflow:visible}main:has(.welcome-page){padding-bottom:84px}.phone{height:560px}}
+@media(max-width:720px){header.top{backdrop-filter:none;-webkit-backdrop-filter:none;background:#000}main{padding-bottom:84px}}
+@media(max-width:560px){.how{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}.demo .msg{opacity:1}}
 </style>
 </head>
@@ -346,7 +383,6 @@ details summary{cursor:pointer;color:var(--mute);font-weight:600;font-size:13.5p
       <a href="#rank" data-tab="rank"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 20V11M12 20V5M18 20v-6"/></svg>Rankings</a>
       <a href="#add" data-tab="add"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Add</a>
     </nav>
-    <span class="spend" id="spend" title="Model spend so far / spending cap"></span>
   </div>
   <div id="pipe"></div>
 </header>
@@ -559,30 +595,44 @@ function downscale(file) { return new Promise((res, rej) => { const fr = new Fil
   fr.readAsDataURL(file); }); }
 
 /* ================= views ================= */
-function realDemo() { // the most recent real date, never a scripted one
+const EXAMPLE_DATE = { // shown ONLY until the first real date exists, and labelled "Example"
+  a: {id: 'ex-a', name: 'Maya'}, b: {id: 'ex-b', name: 'Jonah'}, venue: 'Natural wine bar, Fort Greene', example: true,
+  lines: [['a', "Okay, confession: she'd skip a bar crawl for a 6am climb. Bouldering or ropes?"],
+          ['b', '*laughs* Ropes. He posts a sunrise from a crag every other week. Should I be worried?'],
+          ['a', 'Only if you can\'t keep up. She also asks what you\'re reading before what you do.'],
+          ['b', 'Then you\'re in luck. Three book recs in his last ten posts. Second round?']]};
+
+function phoneDate() {
   const d = Object.values(S.dates).filter(d => d.transcript && d.transcript.length).pop();
-  if (!d) return '';
-  const A = P(d.a), Bp = P(d.b), lines = d.transcript.slice(-4);
-  return `<a class="demo" href="#d/${enc(d.id)}" style="text-decoration:none;color:inherit"><div class="row"><span class="pair">${av(A)}${av(Bp)}</span><b>${esc(first(A))}'s agent &amp; ${esc(first(Bp))}'s agent</b></div>
-    <div class="venue"><i class="dot" style="color:var(--acc)"></i>${isWork(d.status) ? 'Live' : 'Latest date'}${d.venue ? ' · ' + esc(d.venue) : ''}</div>
-    <div class="chat" style="max-height:none;overflow:visible">${lines.map((t, i) => `<div class="msg ${t.who === d.a ? 'l' : 'r'} m${i + 1}"><div class="bub"><small>${esc(first(P(t.who)))}'s agent</small>${esc(t.text)}</div></div>`).join('')}
-    ${d.status === 'on the date' ? '<div class="msg l typing m5"><div class="bub"><i></i><i></i><i></i></div></div>' : ''}</div></a>`;
+  const ex = !d, A = ex ? EXAMPLE_DATE.a : P(d.a), Bp = ex ? EXAMPLE_DATE.b : P(d.b);
+  const lines = ex ? EXAMPLE_DATE.lines.map(([w, t]) => ({side: w === 'a' ? 'l' : 'r', who: w === 'a' ? A : Bp, text: t}))
+    : d.transcript.slice(-4).map(t => ({side: t.who === d.a ? 'l' : 'r', who: P(t.who), text: t.text}));
+  const live = !ex && d.status === 'on the date', label = ex ? 'Example date' : live ? 'Live now' : 'Latest date';
+  const inner = `<div class="island"></div>
+    <div class="status"><b>9:41</b><span><i class="sig"></i><i class="wifi"></i><i class="bat"></i></span></div>
+    <div class="apphead"><span class="back">‹</span><span class="pair">${av(A, 'sm')}${av(Bp, 'sm')}</span>
+      <div class="grow"><b>${esc(first(A))} &amp; ${esc(first(Bp))}</b><small><i class="dot"></i>${label} · ${esc((ex ? EXAMPLE_DATE.venue : d.venue) || 'first date')}</small></div></div>
+    <div class="pchat">${lines.map((m, i) => `<div class="pm ${m.side} m${i + 1}"><small>${esc(first(m.who))}'s agent</small><div class="pb">${esc(m.text).replace(/\*([^*]+)\*/g, '<em>$1</em>')}</div></div>`).join('')}
+      <div class="pm ${lines.length % 2 ? 'r' : 'l'} typing m5"><div class="pb"><i></i><i></i><i></i></div></div></div>
+    <div class="pinput"><span>${live || ex ? 'Agents are typing…' : 'Date finished · tap to read'}</span><i>➤</i></div><div class="homebar"></div>`;
+  return ex ? `<div class="phone" aria-label="Example of two agents on a date">${inner}</div>`
+    : `<a class="phone" href="#d/${enc(d.id)}" aria-label="Open the date">${inner}</a>`;
 }
 
 const views = {
   welcome() { const us = users();
-    return B('hero', `<div class="hero"><div>
+    return B('hero', `<div class="welcome-page"><div class="hero"><div>
       <h1>Your agent goes on the first date. <span class="soft">You go on the good ones.</span></h1>
       <p class="lede">Tell it who you are. It finds real people across the web, dates their agents for you, and ranks who is worth your Friday.</p>
       <div class="ctas"><a class="btn primary lg" href="#onboard">Create your agent</a>${meP() ? `<a class="btn ghost lg" href="#me">Back to ${esc(first(meP()))}</a>` : ''}</div>
       <div class="sub"><a href="#pool">Browse the pool</a><a href="#add">Add someone by link</a></div>
       ${us.length ? `<div style="margin-top:34px"><div class="small mute" style="font-weight:600">Continue as</div><div class="users">${us.map(u => `<a href="#me" data-act="switch" data-id="${esc(u.id)}">${av(u, 'sm')}${esc(nm(u))}</a>`).join('')}</div></div>` : ''}
     </div>
-    ${realDemo()}</div>`)
-    + B('how', `<div class="how"><div><b>You onboard</b><span>Like any dating app: basics, your type, your dealbreakers.</span></div>
+    <div class="phone-wrap">${phoneDate()}</div></div>
+    <div class="how"><div><b>You onboard</b><span>Like any dating app: basics, your type, your dealbreakers.</span></div>
       <div><b>It hunts</b><span>Your agent finds real people from public LinkedIn and Instagram.</span></div>
       <div><b>Agents date</b><span>Each person gets an agent built only from their own public profiles. They meet yours.</span></div>
-      <div><b>You get a ranking</b><span>Private debriefs from both sides, scored, with mutual matches on top.</span></div></div>`); },
+      <div><b>You get a ranking</b><span>Private debriefs from both sides, scored, with mutual matches on top.</span></div></div></div>`); },
 
   me(_, fresh) {
     const p = meP();
@@ -733,8 +783,6 @@ function chrome() {
   document.querySelectorAll('nav.tabs a').forEach(a => { const on = a.dataset.tab === tab; a.classList.toggle('on', on); on ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'); });
   const meA = $('nav.tabs a[data-tab=me]'); if (meA) meA.setAttribute('href', ME ? '#me' : '#welcome');
   const live = Object.values(S.dates).filter(d => isWork(d.status)).length, working = people().filter(p => isWork(p.status) || p.hunt?.running).length;
-  const sp = $('#spend'), money = S.spend || {};
-  if (sp) { sp.textContent = `${+money.calls || 0} model calls · $${(+money.usd || 0).toFixed(2)}`; sp.classList.toggle('over', (+money.usd || 0) >= (+money.budget || 1e9)); }
   const nd = $('#n-dates'), np = $('#n-pool');
   if (nd) { nd.hidden = !live; nd.textContent = live; }
   if (np) { np.hidden = !working; np.textContent = working; np.style.background = 'var(--amb)'; np.style.color = '#000'; }
