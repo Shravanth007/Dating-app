@@ -77,7 +77,9 @@ def chat(to_id, from_id, text):
     who = f"{me['name']} ({(me.get('profile') or {}).get('headline', '')})" if me else "someone"
     history = "\n".join(f"{'Them' if m['who'] == from_id else other['name']}: {m['text']}" for m in thread[-20:])
     reply = ask(persona(other), f"You are chatting live, one-on-one, with {who} on a dating app. Conversation so "
-                f"far:\n{history}\n\nWrite ONLY {other['name']}'s next message (1-3 sentences, natural, in their voice).",
+                f"far:\n{history}\n\nWrite ONLY {other['name']}'s next message (1-3 sentences, natural, in their voice). "
+                "Stick to what the profile actually says; if asked about something it doesn't cover, stay light and "
+                "vague or turn the question back - never make up specific facts, people or stories.",
                 max_tokens=1000).strip().strip('"')
     with lock:
         thread.append({"who": to_id, "text": reply})
