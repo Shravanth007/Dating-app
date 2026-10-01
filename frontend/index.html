@@ -332,13 +332,12 @@ details summary{cursor:pointer;color:var(--mute);font-weight:600;font-size:13.5p
   .msg{max-width:90%}
 }
 main:has(.welcome-page){padding-bottom:12px}
-@media(min-width:861px){html:has(.welcome-page),body:has(.welcome-page){overflow:hidden}}
-.welcome-page{height:calc(100vh - 114px);min-height:600px;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden}
-.welcome-page .hero{flex:1}
-.welcome-page .hero{min-height:0;padding:0 0 20px}
+html:has(.welcome-page),body:has(.welcome-page){overflow:hidden}
+.welcome-page{height:calc(100vh - 106px);height:calc(100dvh - 106px);min-height:0;display:flex;flex-direction:column;justify-content:center;overflow:hidden}
+.welcome-page .hero{min-height:0;padding:0;flex:1}
 .hero>*{min-width:0}
 .phone-wrap{display:flex;justify-content:center}
-.phone{display:flex;flex-direction:column;width:min(330px,100%);height:min(610px,calc(100vh - 270px));min-height:440px;background:#0b0b0d;border:11px solid #1d1d21;border-radius:52px;box-shadow:0 0 0 1px #2c2c31,0 40px 90px -30px rgba(255,45,135,.35);position:relative;overflow:hidden;color:var(--ink);text-decoration:none}
+.phone{display:flex;flex-direction:column;width:min(330px,100%);height:min(660px,calc(100dvh - 170px));min-height:0;background:#0b0b0d;border:11px solid #1d1d21;border-radius:52px;box-shadow:0 0 0 1px #2c2c31,0 40px 90px -30px rgba(255,45,135,.35);position:relative;overflow:hidden;color:var(--ink);text-decoration:none}
 .phone .island{position:absolute;top:9px;left:50%;transform:translateX(-50%);width:96px;height:26px;background:#000;border-radius:20px;z-index:2}
 .phone .status{display:flex;justify-content:space-between;align-items:center;padding:12px 24px 4px;font-size:13px}
 .phone .status span{display:flex;gap:5px;align-items:center}
@@ -349,8 +348,8 @@ main:has(.welcome-page){padding-bottom:12px}
 .phone .apphead b{display:block;font-size:15px}
 .phone .apphead small{display:flex;align-items:center;gap:6px;color:var(--mute);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .phone .apphead .dot{color:var(--acc)}
-.phone .pair{display:flex}.phone .pair>*+*{margin-left:-10px}
-.phone .pchat{flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:10px;padding:14px 12px;overflow:hidden}
+.phone .pair{display:flex}.phone .pair>*{box-shadow:0 0 0 2px #111114}.phone .pair{gap:4px}
+.phone .pchat{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:flex-end;gap:10px;padding:14px 12px;overflow:hidden;-webkit-mask-image:linear-gradient(transparent,#000 48px);mask-image:linear-gradient(transparent,#000 48px)}
 .phone .pm{max-width:82%;opacity:0;animation:pop .5s var(--ease) forwards}
 .phone .pm small{display:block;font-size:10.5px;color:var(--mute);margin:0 8px 3px;font-weight:600}
 .phone .pm .pb{padding:8px 12px;border-radius:18px;font-size:13px;line-height:1.4;background:#1f1f24}
@@ -366,7 +365,18 @@ main:has(.welcome-page){padding-bottom:12px}
 nav.tabs .n[hidden]{display:none}
 .err:empty{display:none}
 html,body{overflow-x:hidden}
-@media(max-width:860px){.welcome-page{height:auto;min-height:0;display:block;overflow:visible}main:has(.welcome-page){padding-bottom:84px}.phone{height:560px}}
+@media(max-width:860px){
+  main:has(.welcome-page){padding-top:14px;padding-bottom:0}
+  .welcome-page{height:calc(100dvh - 58px - 14px - 70px)}
+  .welcome-page .hero{display:flex;flex-direction:column;gap:16px;justify-content:flex-start}
+  .welcome-page h1{font-size:clamp(32px,9vw,46px)}
+  .welcome-page .lede{font-size:15.5px;margin:12px 0 16px}
+  .welcome-page .ctas .btn.lg{padding:13px 22px;font-size:15px}
+  .welcome-page .sub{margin-top:12px}
+  .phone-wrap{flex:1;min-height:0;align-items:flex-start}
+  .phone{height:100%;max-height:540px;width:min(300px,100%);border-width:9px;border-radius:44px}
+  .phone .pm .pb{font-size:12.5px}
+}
 @media(max-width:720px){header.top{backdrop-filter:none;-webkit-backdrop-filter:none;background:#000}main{padding-bottom:84px}}
 @media(max-width:560px){.how{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}.demo .msg{opacity:1}}
@@ -628,11 +638,7 @@ const views = {
       <div class="sub"><a href="#pool">Browse the pool</a><a href="#add">Add someone by link</a></div>
       ${us.length ? `<div style="margin-top:34px"><div class="small mute" style="font-weight:600">Continue as</div><div class="users">${us.map(u => `<a href="#me" data-act="switch" data-id="${esc(u.id)}">${av(u, 'sm')}${esc(nm(u))}</a>`).join('')}</div></div>` : ''}
     </div>
-    <div class="phone-wrap">${phoneDate()}</div></div>
-    <div class="how"><div><b>You onboard</b><span>Like any dating app: basics, your type, your dealbreakers.</span></div>
-      <div><b>It hunts</b><span>Your agent finds real people from public LinkedIn and Instagram.</span></div>
-      <div><b>Agents date</b><span>Each person gets an agent built only from their own public profiles. They meet yours.</span></div>
-      <div><b>You get a ranking</b><span>Private debriefs from both sides, scored, with mutual matches on top.</span></div></div></div>`); },
+    <div class="phone-wrap">${phoneDate()}</div></div></div>`); },
 
   me(_, fresh) {
     const p = meP();
