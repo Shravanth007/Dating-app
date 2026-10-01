@@ -1,0 +1,9 @@
+.env
+.env.*
+!.env.example
+data/state.json
+data/scrape_cache.json
+data/my_profile.json
+.claude
+__pycache__
+render.yaml

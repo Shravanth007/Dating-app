@@ -1,8 +1,0 @@
-[project]
-name = "proxy-hearts"
-version = "1.0.0"
-requires-python = ">=3.12"
-dependencies = ["pydantic>=2.7"]
-
-[tool.vercel]
-entrypoint = "backend.server:app"

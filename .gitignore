@@ -7,3 +7,5 @@ __pycache__/
 data/state.json
 data/scrape_cache.json
 data/my_profile.json
+.vercel
+.env*
