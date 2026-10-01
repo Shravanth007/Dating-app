@@ -1,3 +1,4 @@
 {
-  "framework": "flask"
+  "framework": "flask",
+  "functions": { "app.py": { "maxDuration": 300 } }
 }
