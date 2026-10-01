@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Proxy Hearts</title>
+<style>
+:root{--bg:#fbf7f4;--card:#fff;--ink:#231a1f;--mute:#7b6d74;--line:#eadfe2;--acc:#d6336c;--acc2:#7048e8;--ok:#2b8a3e}
+*{box-sizing:border-box}body{margin:0;font:15px/1.5 system-ui,Segoe UI,sans-serif;background:var(--bg);color:var(--ink)}
+header{display:flex;gap:18px;align-items:center;padding:14px 24px;border-bottom:1px solid var(--line);background:var(--card);position:sticky;top:0;z-index:1;flex-wrap:wrap}
+header b{font-size:20px;color:var(--acc);margin-right:12px}header a{color:var(--mute);text-decoration:none;font-weight:600}header a.on{color:var(--ink)}
+main{max-width:1100px;margin:0 auto;padding:24px 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.person{display:flex;gap:12px;align-items:center;cursor:pointer}.person:hover{border-color:var(--acc)}
+.av{width:52px;height:52px;border-radius:50%;object-fit:cover;background:var(--line);flex:none;display:grid;place-items:center;font-weight:700;color:var(--mute)}
+.big .av{width:96px;height:96px;font-size:30px}
+.mute{color:var(--mute);font-size:13px}h2{margin:0 0 12px}h3{margin:18px 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--mute)}
+.chips span{display:inline-block;background:#fdeef3;color:#a61e4d;border-radius:99px;padding:3px 10px;margin:0 6px 6px 0;font-size:13px}
+.chips.v span{background:#f0ebff;color:#5f3dc4}.chips.g span{background:#ebfbee;color:#2b8a3e}.chips.r span{background:#fff4e6;color:#d9480f}
+button{background:var(--acc);color:#fff;border:0;border-radius:10px;padding:9px 16px;font-weight:600;cursor:pointer}button.alt{background:var(--acc2)}button.ghost{background:none;color:var(--mute);border:1px solid var(--line)}
+textarea,input,select{width:100%;font:inherit;padding:9px;border:1px solid var(--line);border-radius:10px;background:#fff}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.bubble{max-width:75%;padding:10px 14px;border-radius:16px;margin:8px 0;animation:in .4s}.bubble.l{background:#fdeef3}.bubble.r{background:#f0ebff;margin-left:auto}
+@keyframes in{from{opacity:0;transform:translateY(6px)}}
+.bubble small{display:block;font-weight:700;font-size:12px;color:var(--mute)}
+table{width:100%;border-collapse:collapse}td{padding:8px;border-top:1px solid var(--line);vertical-align:top}
+.score{font-weight:800;font-size:18px;color:var(--acc)}.bar{height:6px;background:var(--line);border-radius:3px}.bar i{display:block;height:100%;background:var(--acc);border-radius:3px}
+.ev td{font-size:13px}.err{color:#c92a2a}.pill{font-size:12px;padding:2px 8px;border-radius:99px;background:var(--line)}
+pre{white-space:pre-wrap;font-size:12px;background:#faf6f7;padding:10px;border-radius:8px;max-height:220px;overflow:auto}
+@media(max-width:640px){.row{grid-template-columns:1fr}.bubble{max-width:90%}}
+</style>
+</head>
+<body>
+<header><b>♥ Proxy Hearts</b><a href="#add">1 · Add people</a><a href="#people">2 · Agents & profiles</a><a href="#dates">3 · Dates</a><a href="#rank">4 · Rankings</a></header>
+<main id="app"></main>
+<script>
+let S = {people:{}, dates:{}, rankings:{}};
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const P = id => S.people[id] || {name:'?'};
+const av = p => p.photo ? `<img class="av" src="${esc(p.photo)}" referrerpolicy="no-referrer" onerror="this.outerHTML='<div class=av>${esc((p.name||'?')[0])}</div>'">` : `<div class="av">${esc((p.name||'?')[0])}</div>`;
+const chips = (xs, c='') => `<div class="chips ${c}">${(xs||[]).map(x=>`<span>${esc(x)}</span>`).join('')}</div>`;
+const api = (path, body) => fetch(path, {method:'POST', body:JSON.stringify(body||{})}).then(r=>r.json()).then(r=>{ if(r.error) alert(r.error); refresh(); return r; });
+
+const views = {
+  add: () => `
+    <div class="card"><h2>Add a person</h2><p class="mute">Two sources only: their LinkedIn and their public Instagram. The agent fetches both.
+      If a site blocks the fetch, paste the public profile text (bio, about, captions) from that same page.</p>
+      <div class="row"><input id="li" placeholder="https://www.linkedin.com/in/…"><input id="ig" placeholder="https://www.instagram.com/…"></div>
+      <div class="row"><textarea id="lit" rows="3" placeholder="(optional) text copied from their public LinkedIn"></textarea><textarea id="igt" rows="3" placeholder="(optional) text copied from their public Instagram"></textarea></div>
+      <div class="row"><select id="gen"><option value="">Gender (optional)</option><option value="men">Man</option><option value="women">Woman</option></select>
+        <select id="seek"><option value="everyone">Open to dating everyone</option><option value="men">Men</option><option value="women">Women</option></select></div>
+      <button onclick="addOne()">Create agent</button></div>
+    <div class="card"><h2>Bulk add</h2><p class="mute">One person per line: <code>linkedin_url instagram_url</code></p>
+      <textarea id="bulk" rows="8"></textarea><br><br><button onclick="addBulk()">Create all agents</button></div>`,
+
+  people: () => `<div class="card" style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+      <div><h2 style="margin:0">${Object.keys(S.people).length} agents</h2><span class="mute">${Object.values(S.people).filter(p=>p.profile).length} have read their person</span></div>
+      <button class="alt" onclick="api('/api/round').then(()=>location.hash='dates')">♥ Start speed-dating round</button></div>
+    <div class="grid">${Object.values(S.people).map(p=>`
+      <div class="card person" onclick="location.hash='p/${p.id}'">${av(p)}<div><b>${esc(p.name||'(reading…)')}</b>
+      <div class="mute">${esc(p.profile?.headline||'')}</div><span class="pill ${p.status.startsWith('error')?'err':''}">${esc(p.status)}</span></div></div>`).join('')}</div>`,
+
+  p: id => { const p = P(id), f = p.profile; if(!p.sources) return 'Not found';
+    const others = Object.values(S.people).filter(q=>q.profile && q.id!==id);
+    return `<div class="card big" style="display:flex;gap:18px;align-items:center;flex-wrap:wrap">${av(p)}<div style="flex:1;min-width:220px">
+        <h2 style="margin:0">${esc(p.name)}</h2><div>${esc(f?.headline||'')}</div>
+        <div class="mute"><a href="${esc(p.linkedin)}" target="_blank">LinkedIn</a> · <a href="${esc(p.instagram)}" target="_blank">Instagram</a> · agent status: ${esc(p.status)}</div></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="ghost" onclick="api('/api/people/${id}/analyze')">Re-read</button>
+        ${f?`<button class="ghost" onclick="location.hash='rank/${id}'">Rankings</button>`:''}
+        <button class="ghost" onclick="confirm('Delete?')&&api('/api/people/${id}/delete').then(()=>location.hash='people')">Delete</button></div></div>
+      ${f ? `<div class="card"><h3>The agent's read</h3><p>${esc(f.summary)}</p>
+        <div class="row"><div><h3>Needs</h3>${chips(f.needs)}</div><div><h3>Looking for</h3><p>${esc(f.looking_for)}</p></div></div>
+        <div class="row"><div><h3>Hobbies</h3>${chips(f.hobbies)}</div><div><h3>Interests</h3>${chips(f.interests)}</div></div>
+        <div class="row"><div><h3>Values</h3>${chips(f.values,'v')}</div><div><h3>Personality</h3>${chips(f.personality,'v')}</div></div>
+        <div class="row"><div><h3>Green flags</h3>${chips(f.green_flags,'g')}</div><div><h3>Possible dealbreakers</h3>${chips(f.possible_dealbreakers,'r')}</div></div>
+        <div class="row"><div><h3>Communication style</h3><p>${esc(f.communication_style)}</p></div><div><h3>Lifestyle</h3><p>${esc(f.lifestyle)}</p></div></div>
+        <h3>Ideal first date</h3><p>${esc(f.ideal_first_date)}</p>
+        <h3>Evidence — how the agent got there</h3><table class="ev">${f.evidence.map(e=>`<tr><td><span class="pill">${esc(e.source)}</span></td><td>${esc(e.signal)}</td><td>→ ${esc(e.inference)}</td></tr>`).join('')}</table>
+        <p class="mute">Data confidence: ${esc(f.data_confidence)}</p></div>
+        <div class="card"><h3>Send this agent on a date</h3><div style="display:flex;gap:10px"><select id="partner">${others.map(q=>`<option value="${q.id}">${esc(q.name)}</option>`).join('')}</select>
+        <button onclick="api('/api/date',{a:'${id}',b:$('#partner').value}).then(r=>location.hash='d/'+r.id)">Go on date</button></div></div>` : ''}
+      <div class="card"><h3>Raw sources the agent read</h3>${['linkedin','instagram'].map(k=>{const s=p.sources[k];return `<b>${k}</b>
+        ${s.error?`<div class="err">${esc(s.error)}</div>`:''}<pre>${esc([s.fetched,s.pasted].filter(Boolean).join('\n\n— pasted —\n')||'(nothing yet)')}</pre>`}).join('')}</div>`; },
+
+  dates: () => { const ds = Object.values(S.dates).reverse();
+    return `<div class="card"><h2>${ds.length} dates</h2><span class="mute">${ds.filter(d=>d.status!=='done').length} happening right now</span></div>
+    <div class="grid">${ds.map(d=>`<div class="card person" onclick="location.hash='d/${d.id}'">${av(P(d.a))}${av(P(d.b))}<div>
+      <b>${esc(P(d.a).name)} & ${esc(P(d.b).name)}</b><div class="mute">${d.status==='done'?`♥ ${d.verdicts[d.a].score} / ${d.verdicts[d.b].score}`:esc(d.status)+' · '+d.transcript.length+' lines'}</div></div></div>`).join('')}</div>`; },
+
+  d: id => { const d = S.dates[id]; if(!d) return 'Not found';
+    return `<div class="card" style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">${av(P(d.a))}${av(P(d.b))}<div><h2 style="margin:0">${esc(P(d.a).name)} × ${esc(P(d.b).name)}</h2>
+      <div class="mute">📍 ${esc(d.venue||'choosing a spot…')}</div><span class="pill">${esc(d.status)}</span></div></div>
+      <div class="card">${d.transcript.map(t=>`<div class="bubble ${t.who===d.a?'l':'r'}"><small>${esc(P(t.who).name)}'s agent</small>${esc(t.text)}</div>`).join('') || '<p class="mute">The agents are arriving…</p>'}
+      ${d.status==='on the date'?'<p class="mute">…typing</p>':''}</div>
+      ${Object.keys(d.verdicts).length?`<div class="row">${[d.a,d.b].filter(x=>d.verdicts[x]).map(x=>{const v=d.verdicts[x];return `<div class="card">
+        <h3>${esc(P(x).name)}'s agent — private debrief</h3><div class="score">${v.score}/100 ${v.second_date?'· wants a 2nd date':'· no 2nd date'}</div>
+        <p>${esc(v.summary)}</p><p class="mute">${esc(v.chemistry)}</p>${chips(v.shared_ground,'g')}${chips(v.friction,'r')}</div>`}).join('')}</div>`:''}`; },
+
+  rank: id => { const ids = Object.keys(S.rankings); if(!ids.length) return '<div class="card">No profiles yet.</div>';
+    id = id || ids[0];
+    return `<div class="card"><h2>Who fits whom best</h2><select onchange="location.hash='rank/'+this.value">${ids.map(x=>`<option value="${x}" ${x===id?'selected':''}>${esc(P(x).name)}</option>`).join('')}</select>
+      <p class="mute">Dated pairs are scored by both agents' debriefs (60% this person's agent, 40% theirs). Undated pairs are an estimate until they meet.</p></div>
+      <div class="card"><table>${(S.rankings[id]||[]).map((r,i)=>`<tr><td><b>#${i+1}</b></td><td>${av(P(r.id))}</td>
+        <td><b><a href="#p/${r.id}">${esc(P(r.id).name)}</a></b> ${r.second_date?'<span class="pill">♥ mutual 2nd date</span>':''}<div class="mute">${esc(r.why)}</div></td>
+        <td style="width:140px"><div class="score">${r.score}</div><div class="bar"><i style="width:${r.score}%"></i></div>
+        ${r.dated?`<a class="mute" href="#d/${r.dated}">read the date →</a>`:`<a class="mute" href="javascript:api('/api/date',{a:'${id}',b:'${r.id}'}).then(r=>location.hash='d/'+r.id)">send on date →</a>`}</td></tr>`).join('')}</table></div>`; },
+};
+
+function render(){ const [v, arg] = (location.hash.slice(1) || 'add').split('/');
+  document.querySelectorAll('header a').forEach(a=>a.classList.toggle('on', a.hash.slice(1)===v || (v==='p'&&a.hash==='#people') || (v==='d'&&a.hash==='#dates')));
+  if(v==='add' && $('#app').dataset.v==='add') return; // don't wipe the form while typing
+  $('#app').dataset.v = v; $('#app').innerHTML = (views[v]||views.add)(arg); }
+async function refresh(){ S = await fetch('/api/state').then(r=>r.json()); render(); }
+function addOne(){ api('/api/people',{people:[{linkedin:$('#li').value,instagram:$('#ig').value,li_text:$('#lit').value,ig_text:$('#igt').value,gender:$('#gen').value,seeking:$('#seek').value}]}).then(r=>r.ids&&(location.hash='people')); }
+function addBulk(){ const people = $('#bulk').value.trim().split('\n').map(l=>l.trim().split(/\s+/)).filter(x=>x.length>=2).map(([linkedin,instagram])=>({linkedin,instagram}));
+  api('/api/people',{people}).then(r=>r.ids&&(location.hash='people')); }
+window.onhashchange = render;
+refresh(); setInterval(()=>{ if(!['add'].includes(location.hash.slice(1)||'add')) refresh(); }, 1500);
+</script>
+</body>
+</html>
