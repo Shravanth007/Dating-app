@@ -55,7 +55,7 @@ Optional: `MODEL` (default `nvidia/nemotron-3-super-120b-a12b:free`, with `qwen/
 
 ### Deploy on Vercel
 
-1. Import the GitHub repo in Vercel (no build settings needed; `vercel.json` + `api/index.py` are included).
+1. Import the GitHub repo in Vercel (no build settings needed; `pyproject.toml` points Vercel to the WSGI `app` in `backend/server.py`).
 2. **Storage → Create → Upstash Redis** (free) and connect it to the project. This stores people, chats and rankings,
    because Vercel's disk doesn't persist between requests. `KV_REST_API_URL` and `KV_REST_API_TOKEN` are added automatically.
 3. **Settings → Environment Variables:** add `OPENROUTER_API_KEY`, `SERPER_API_KEY` and `APIFY_TOKEN`. Apify matters on
@@ -99,7 +99,7 @@ Run the tests with `python tests/test_core.py`. To see what the tools fetch for 
 ├── tests/test_core.py
 ├── .env.example              ← copy to .env, add keys
 ├── requirements.txt          ← just pydantic; the rest is the Python standard library
-├── api/index.py + vercel.json ← Vercel deployment
+├── pyproject.toml            ← Vercel entrypoint (backend.server:app)
 └── render.yaml               ← one-click deploy to Render
 ```
 

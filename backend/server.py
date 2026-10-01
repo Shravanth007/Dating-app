@@ -12,7 +12,7 @@ POST /api/date                      {a, b}                → two agents chat, t
 POST /api/run                       everyone searches, dates and gets ranked
 POST /api/chat                      {to, from, text}      → chat live with a person's agent; returns {reply}
 POST /api/dates/<id>/plan           the two agents set up the first date (check availability, agree on a plan)"""
-import json, re, sys, time, urllib.parse
+import io, json, re, sys, time, urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from .agents.dater import SLOTS, chat, plan_first_date, run_date, start_date
@@ -179,6 +179,29 @@ class Handler(BaseHTTPRequestHandler):
 
     def log_message(self, *args):
         pass
+
+
+class _Request:
+    """Lets a WSGI server (Vercel) reuse Handler's routes: same attributes, response captured instead of written."""
+    def __init__(self, path, body):
+        self.path, self.headers, self.rfile, self.out = path, {"Content-Length": str(len(body))}, io.BytesIO(body), None
+
+    def send(self, code, body, ctype="application/json"):
+        self.out = (code, body if isinstance(body, bytes) else json.dumps(body).encode(), ctype)
+
+
+def app(environ, start_response):
+    """WSGI entrypoint (Vercel: pyproject.toml → [tool.vercel] entrypoint = "backend.server:app")."""
+    path = environ.get("PATH_INFO") or "/"
+    if environ.get("QUERY_STRING"):
+        path += "?" + environ["QUERY_STRING"]
+    post = environ.get("REQUEST_METHOD") == "POST"
+    body = environ["wsgi.input"].read(int(environ.get("CONTENT_LENGTH") or 0)) if post else b""
+    req = _Request(path, body)
+    (Handler.do_POST if post else Handler.do_GET)(req)
+    code, data, ctype = req.out
+    start_response(f"{code} {'OK' if code < 400 else 'Error'}", [("Content-Type", ctype), ("Cache-Control", "no-store")])
+    return [data]
 
 
 def main():
