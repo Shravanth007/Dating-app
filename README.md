@@ -4,93 +4,90 @@
 
 ---
 
-## What happens, step by step
+## How it works
 
 ```
- YOU                          YOUR AGENT                                  THE PEOPLE IT FINDS
- ───                          ──────────                                  ───────────────────
- 1. Onboarding        ──►     reads your answers, writes your
-    (who you are,             profile + a "partner brief"
-    who you want)                     │
-                                      ▼
-                       2. HUNT: searches the web (web_search tool),
-                          reads candidates' LinkedIn + Instagram   ──►    each recruit gets their OWN agent,
-                          (read_linkedin / read_instagram tools),         built only from their LinkedIn +
-                          judges the fit, recruits the good ones          Instagram (needs, hobbies, voice…)
-                                      │
-                                      ▼
-                       3. scores everyone in the pool
-                                      │
-                                      ▼
-                       4. DATES: your agent and their agent       ◄──►    they talk, live, in each person's voice
-                          go on a date (8 lines of dialogue)
-                                      │
-                                      ▼
-                       5. both agents write a private debrief
-                          (score, chemistry, 2nd date?)
-                                      │
-                                      ▼
- 6. Your ranking      ◄──     who fits you best, and why
+ YOU                         YOUR AGENT                                   THE PEOPLE IT FINDS
+ ───                         ──────────                                   ───────────────────
+ 1. Onboarding       ──►     turns your answers into a profile
+    (who you are,            + a "partner brief" (who to look for)
+    who you want)                    │
+                                     ▼
+                      2. HUNT  web_search → read_person → recruit   ──►   each recruit gets their OWN agent,
+                         (it decides what to search, reads both           built only from their public
+                         profiles, judges the fit, recruits)              LinkedIn + Instagram
+                                     │
+                                     ▼
+                      3. scores everyone in the pool (0–100, with a reason)
+                                     │
+                                     ▼
+                      4. LIVE DATES with its top 3, one at a time  ◄──►  their agent speaks as them, in their voice
+                                     │
+                                     ▼
+                      5. both agents privately debrief (score, chemistry, second date?)
+                                     │
+                                     ▼
+ 6. Your ranking     ◄──     who fits you best, and why
+ 7. Chat             ──►     talk live with any person's agent; it answers as them
 ```
 
-The agents do the work themselves. Each is an LLM (via **OpenRouter**) given **tools** and left to decide which ones to call, in what order, and what to make of the results. The code only runs the tools. Every tool call shows up live in your agent's activity feed.
+**The agents decide, the tools fetch.** An agent is an LLM (via OpenRouter) given tools. It chooses which tool to call, with what, and what to make of the result. The tools only fetch data and cost no AI calls. Every tool call appears live in your agent's activity feed.
+
+**The two-sources rule:** every person the agents find is built from exactly two sources, their public LinkedIn and their public Instagram. Your own agent is built from your onboarding answers, plus your own links if you add them.
 
 ---
 
-## Run it (3 commands)
+## Run it
 
 ```bash
 pip install -r requirements.txt
-export OPENROUTER_API_KEY=sk-or-...        # Windows PowerShell:  $env:OPENROUTER_API_KEY="sk-or-..."
-python -m backend                          # then open http://localhost:8000
+cp .env.example .env        # then paste your keys into .env (it is git-ignored)
+python -m backend           # open http://localhost:8000
 ```
 
-Optional settings (environment variables):
-
-| Variable | What it does | Default |
+| Key in `.env` | What it powers | Free tier |
 |---|---|---|
-| `OPENROUTER_API_KEY` | **Required.** Powers every agent | none |
-| `MODEL` | Any OpenRouter model id | `anthropic/claude-opus-5.5` |
-| `APIFY_TOKEN` | Uses Apify's scrapers first (sturdier on cloud servers) | not set: built-in scrapers |
-| `PORT` | Web server port | `8000` |
+| `OPENROUTER_API_KEY` | **Required.** Every agent (profiles, hunt, dates, debriefs, chat) | Free models: 50 requests/day, or 1,000/day after a one-time $10 top-up |
+| `SERPER_API_KEY` | The `web_search` tool (Google results). `TAVILY_API_KEY` also works. | 2,500 searches, no card |
+| `APIFY_TOKEN` | Reliable LinkedIn + Instagram scraping (first choice; free scrapers are the fallback) | $5/month credit, about $0.004 per profile |
 
-Run the tests with `python tests/test_core.py`. To see exactly what the scrapers return for someone, run `python -m backend --scrape <linkedin_url> <instagram_url>`.
+Optional: `MODEL` (default `nvidia/nemotron-3-super-120b-a12b:free`, with `qwen/qwen3.8-27b:free` as fallback), `PORT`, `BUDGET_USD`, `MAX_CALLS`.
+
+Run the tests with `python tests/test_core.py`. To see what the tools fetch for any person (no AI involved), run `python -m backend --scrape <linkedin_url> <instagram_url>`.
 
 ---
 
 ## Project structure
 
 ```
-Proxy Hearts/
 ├── frontend/
-│   └── index.html            ← the whole website (HTML + CSS + JavaScript in one file, no build step)
+│   └── index.html            ← the whole website (HTML + CSS + JS, no build step)
 │
-├── backend/                  ← the Python server and the agents
-│   ├── server.py             ← web server: serves the frontend + the JSON API (start here)
-│   ├── config.py             ← all settings (API keys, model, how many dates…)
-│   ├── store.py              ← the app's memory (people, dates, activity logs → data/demo.json)
-│   ├── llm.py                ← talks to OpenRouter: ask() and run_agent() (the tool-calling loop)
+├── backend/
+│   ├── server.py             ← web server + JSON API (start here)
+│   ├── config.py             ← every setting and limit, plus loading .env
+│   ├── store.py              ← the app's memory → data/state.json
+│   ├── llm.py                ← OpenRouter: ask() and run_agent() (the tool-calling loop), spend + call caps
 │   ├── pipeline.py           ← "Run everyone": every agent searches, dates and gets ranked
-│   │
-│   ├── agents/               ← the four agent jobs
-│   │   ├── reader.py         ← gets to know a person (reads LinkedIn + Instagram → profile)
-│   │   ├── hunter.py         ← your agent hunts the web for real people who match you
-│   │   ├── matcher.py        ← scores the pool for a person + the ranking formula
-│   │   └── dater.py          ← two agents go on a date, then each debriefs
-│   │
-│   └── tools/                ← what agents can use
-│       ├── web_search.py     ← search the web (OpenRouter web plugin)
-│       ├── linkedin.py       ← read a public LinkedIn profile
-│       ├── instagram.py      ← read a public Instagram profile
+│   ├── agents/
+│   │   ├── reader.py         ← gets to know a person → profile, voice, partner brief, evidence
+│   │   ├── hunter.py         ← your agent hunts the web for real people who fit you
+│   │   ├── matcher.py        ← scores the pool + the ranking formula
+│   │   └── dater.py          ← live dates, private debriefs, and live chat with an agent
+│   └── tools/
+│       ├── web_search.py     ← Serper / Tavily (DuckDuckGo fallback)
+│       ├── person.py         ← read_person: LinkedIn + Instagram of one person, cached
+│       ├── linkedin.py       ← LinkedIn scraper (Apify → built-in)
+│       ├── instagram.py      ← Instagram scraper (Apify → built-in)
 │       └── fetch.py          ← shared HTTP helpers
 │
 ├── data/
-│   ├── demo.json             ← your run (people, dates, rankings): stays on your machine, git-ignored
-│   ├── scrape_cache.json     ← every profile scraped, saved once: git-ignored
-│   └── seed_people.txt       ← real people (LinkedIn + Instagram) you can bulk-add to the pool
-│
+│   ├── seed_people.txt       ← verified public profiles you can bulk-add (Add → Bulk)
+│   ├── state.json            ← your run (people, dates, chats): local only, git-ignored
+│   └── scrape_cache.json     ← each profile is scraped once and kept: local only, git-ignored
 ├── tests/test_core.py
-├── requirements.txt          ← just `pydantic`; everything else is Python's standard library
+├── .env.example              ← copy to .env, add keys
+├── requirements.txt          ← just pydantic; the rest is the Python standard library
 └── render.yaml               ← one-click deploy to Render
 ```
 
@@ -98,27 +95,33 @@ Proxy Hearts/
 
 ## The agents and their tools
 
-| Agent | File | Tools it can call | What it produces |
-|---|---|---|---|
-| **Reader** | `agents/reader.py` | `read_linkedin`, `read_instagram` (only its own person's links) | Profile: needs, hobbies, interests, values, personality, communication style, lifestyle, voice, partner brief, green flags, dealbreakers, ideal first date, and an **evidence table** (source → signal → inference) |
-| **Hunter** | `agents/hunter.py` | `web_search`, `read_linkedin`, `read_instagram`, `recruit`, `finish` | Finds real people with a public LinkedIn and Instagram, reads both to check the fit, and recruits the good matches |
-| **Matcher** | `agents/matcher.py` | none (pure judgment) | A 0–100 fit score and a reason for everyone in the pool |
-| **Dater** | `agents/dater.py` | none (conversation) | A live date transcript and a private debrief from each side |
+| Agent | Tools it calls | What it produces |
+|---|---|---|
+| **Hunter** (`agents/hunter.py`) | `web_search`, `read_person`, `recruit`, `finish` | Finds real people with a public LinkedIn **and** a public Instagram, reads both, judges the fit, recruits the good ones. `recruit` is refused unless both profiles were read and both are public. |
+| **Reader** (`agents/reader.py`) | `read_person` | Profile: needs, hobbies, interests, values, personality, communication style, lifestyle, **voice**, **partner brief**, green flags, dealbreakers, ideal first date, and an **evidence table** (source → signal → inference) |
+| **Matcher** (`agents/matcher.py`) | none | A 0–100 fit score and a reason for everyone in the pool |
+| **Dater** (`agents/dater.py`) | none | Live date transcripts, a private debrief from each side, and live chat with a person's agent |
 
 **Ranking:** for pairs that dated, 60% your agent's debrief plus 40% theirs, because fit has to be mutual. Pairs that haven't met yet use the pre-date fit score.
 
-**Sources rule:** every person the agents find is built from exactly two sources, their public LinkedIn and their public Instagram. Your own agent is built from your onboarding answers, plus your own links if you add them.
+## Limits (so a run can never burn money)
+
+All limits live in `backend/config.py`: a hard cap on model calls (`MAX_CALLS` = 400) and on spend (`BUDGET_USD` = $2), at most 45 web searches and 90 agent steps per hunt, 3 dates per hunt with 8 lines each, free-model calls spaced 3.2 s apart, and long tool results trimmed. On the default free models a full run costs $0.
 
 ---
 
 ## Technical: how LinkedIn and Instagram are scraped
 
-| | Tier 1: Apify (if `APIFY_TOKEN`) | Tier 2: built-in, free, Python stdlib only |
+| | Tier 1: Apify (with `APIFY_TOKEN`) | Tier 2: built-in, free, Python stdlib |
 |---|---|---|
-| **Instagram** | [`apify/instagram-profile-scraper`](https://apify.com/apify/instagram-profile-scraper) | Instagram's private web API (used by instaloader and most GitHub scrapers) returns 429 to servers. We request `instagram.com/<handle>/` as a search-engine crawler instead. That page embeds the profile JSON (name, bio, verified, followers, following, private flag) and the recent posts' captions, which we pull out with `json.raw_decode`. Private profiles are rejected. |
-| **LinkedIn** | [`harvestapi/linkedin-profile-scraper`](https://apify.com/harvestapi/linkedin-profile-scraper) (no cookies) | The public profile page embeds a schema.org `Person` (headline, location, about, followers, experience, education, languages) plus recent posts and articles, parsed from `ld+json`. Browsers soon get HTTP 999, so we rotate to link-preview crawler user agents. |
-| **Web search** | none | OpenRouter's web search plugin (`plugins: [{"id": "web"}]`) |
+| **LinkedIn** | [`harvestapi/linkedin-profile-scraper`](https://apify.com/harvestapi/linkedin-profile-scraper) (no cookies): headline, location, full experience with descriptions, education, skills, projects, awards, interests | The public profile page embeds a schema.org `Person` (headline, location, about, followers, experience, education, languages) plus recent posts and articles (`ld+json`). Rendered sections add job titles, dates, full About, volunteering, courses. Browsers soon get HTTP 999, so it rotates to link-preview crawler user agents. |
+| **Instagram** | [`apify/instagram-profile-scraper`](https://apify.com/apify/instagram-profile-scraper): bio, website, counts, and latest posts with caption, date, likes, comments, location | Instagram's private web API (used by instaloader and most GitHub scrapers) returns 429 to servers. The profile page served to search-engine crawlers embeds the profile JSON (name, bio, verified, counts, private flag) and recent captions. |
+| **Web search** | Serper.dev (Google) or Tavily | DuckDuckGo HTML (rate-limits quickly) |
 
-Safety: the server only fetches LinkedIn and Instagram URLs it rebuilds from a validated username (no arbitrary URL fetching), and all onboarding input is validated (18+, image-only photo, size limits).
+**Rules the tools enforce:**
+- Private Instagram accounts and LinkedIn profiles hidden from the public are rejected.
+- Other people's data that scrapers return (LinkedIn "people also viewed") is stripped.
+- The server only fetches LinkedIn and Instagram URLs it rebuilds from a validated username (no arbitrary URL fetching).
+- All onboarding input is validated: 18+, image-only photo, size limits.
 
-**Stack:** Python 3.11+ standard library (`http.server`, `urllib`, `json`, `re`, `threading`), pydantic, OpenRouter (tool calling, strict JSON-schema output, web search). The frontend is vanilla HTML/CSS/JS and data lives in a JSON file. There is no framework and no build step.
+**Stack:** Python 3.11+ standard library (`http.server`, `urllib`, `json`, `re`, `threading`), pydantic, OpenRouter (tool calling, JSON-schema output), Serper, Apify. The frontend is vanilla HTML/CSS/JS. Data lives in local JSON files. There is no framework and no build step.

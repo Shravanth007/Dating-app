@@ -21,7 +21,7 @@ FALLBACK_MODELS = [m for m in env("FALLBACK_MODELS", "qwen/qwen3.8-27b:free").sp
 HUNTER_MODEL = env("HUNTER_MODEL", MODEL)                  # the hunt is the longest loop
 PORT = int(env("PORT", 8000))
 
-DATA_FILE = Path(env("DATA_FILE", ROOT / "data" / "demo.json"))
+DATA_FILE = Path(env("DATA_FILE", ROOT / "data" / "state.json"))
 FRONTEND = ROOT / "frontend" / "index.html"
 
 # ---- limits: so a run can never burn more than you allow ----

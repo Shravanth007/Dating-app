@@ -3,7 +3,7 @@ __pycache__/
 .env
 .env.txt
 
-# personal data: scraped profiles, the run, the demo person — stays on this machine
-data/demo.json
+# personal data: the app state, scraped profiles, your saved answers — stays on this machine
+data/state.json
 data/scrape_cache.json
-data/demo_person.json
+data/my_profile.json

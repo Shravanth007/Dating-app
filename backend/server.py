@@ -93,8 +93,8 @@ class Handler(BaseHTTPRequestHandler):
                 snap = json.loads(json.dumps(state))
             snap["rankings"] = {pid: ranking(pid, snap["people"], snap["dates"])
                                 for pid, p in snap["people"].items() if p.get("profile")}
-            demo = ROOT / "data" / "demo_person.json"  # optional: pre-filled onboarding answers for demos
-            snap["demo_person"] = json.loads(demo.read_text("utf8")) if demo.exists() else None
+            saved = ROOT / "data" / "my_profile.json"  # optional: your own onboarding answers, pre-filled
+            snap["saved_profile"] = json.loads(saved.read_text("utf8")) if saved.exists() else None
             return self.send(200, snap)
         if urllib.parse.urlparse(self.path).path in ("/", "/index.html"):
             return self.send(200, FRONTEND.read_bytes(), "text/html; charset=utf-8")

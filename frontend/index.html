@@ -139,11 +139,6 @@ input[type=range]{padding:0;border:0;background:none;box-shadow:none;accent-colo
 .hero .sub{display:flex;gap:18px;flex-wrap:wrap;margin-top:22px}
 .hero .sub a{color:var(--mute);font-weight:600;text-decoration:none;border-bottom:1px solid var(--line2);padding-bottom:2px}
 .hero .sub a:hover{color:var(--ink);border-color:var(--ink)}
-.demo{background:var(--s1);border:1px solid var(--line);border-radius:28px;padding:18px;position:relative;overflow:hidden}
-.demo::before{content:"";position:absolute;inset:-40% -20% auto auto;width:300px;height:300px;background:radial-gradient(closest-side,rgba(255,45,135,.25),transparent);pointer-events:none}
-.demo .venue{font-size:13px;color:var(--mute);margin:2px 0 14px;display:flex;align-items:center;gap:8px}
-.demo .msg{opacity:0;animation:pop .5s var(--ease) forwards}
-.demo .m1{animation-delay:.5s}.demo .m2{animation-delay:1.6s}.demo .m3{animation-delay:2.8s}.demo .m4{animation-delay:4s}.demo .m5{animation-delay:5s}
 @keyframes pop{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
 .how{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:10px}
 .how div{border-top:1px solid var(--line2);padding-top:14px}
@@ -384,7 +379,7 @@ html,body{overflow-x:hidden}
 }
 @media(max-width:720px){header.top{backdrop-filter:none;-webkit-backdrop-filter:none;background:#000}main{padding-bottom:84px}}
 @media(max-width:560px){.how{grid-template-columns:1fr}}
-@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}.demo .msg{opacity:1}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}.phone .pm{opacity:1}}
 </style>
 </head>
 <body>
@@ -586,7 +581,7 @@ const OB = [
 ];
 function obBody() { const st = OB[obStep], n = OB.length, lastS = obStep === n - 1;
   return `<div class="wiz"><div class="prog"><i style="width:${((obStep + 1) / n * 100).toFixed(1)}%"></i></div>
-    <div class="count"><span>Step ${obStep + 1} of ${n}</span>${obStep ? '' : `<span class="row" style="gap:14px">${S.demo_person ? '<a class="mute" href="#onboard" data-act="demoperson" style="text-decoration:none">Use demo person</a>' : ''}<a class="mute" href="#welcome" style="text-decoration:none">Cancel</a></span>`}</div>
+    <div class="count"><span>Step ${obStep + 1} of ${n}</span>${obStep ? '' : `<span class="row" style="gap:14px">${S.saved_profile ? '<a class="mute" href="#onboard" data-act="savedprofile" style="text-decoration:none">Use my saved answers</a>' : ''}<a class="mute" href="#welcome" style="text-decoration:none">Cancel</a></span>`}</div>
     <div class="body ${obDir}"><h2>${st.t}</h2><p class="why">${st.w}</p>${st.b()}</div>
     <div class="err" id="ob-err" role="alert">${esc(obErr)}</div>
     <div class="foot">${obStep ? '<button type="button" class="ghost" data-act="obback">Back</button>' : '<span></span>'}
@@ -867,7 +862,7 @@ if (typeof document !== 'undefined' && document.getElementById('app')) {
       case 'obback': obErr = ''; obStep = Math.max(0, obStep - 1); obRender('back'); return scrollTo(0, 0);
       case 'obgo': obErr = ''; obStep = +a.i || 0; obRender('back'); return scrollTo(0, 0);
       case 'switch': e.preventDefault(); setMe(a.id); location.hash = 'me'; lastRoute = ''; return render(true);
-      case 'demoperson': { const b = blankOb(), d = S.demo_person || {};
+      case 'savedprofile': { const b = blankOb(), d = S.saved_profile || {};
         ob = {...b, ...d, lifestyle: {...b.lifestyle, ...(d.lifestyle || {})}, prompts: {...b.prompts, ...(d.prompts || {})}};
         obStep = OB.length - 1; obErr = ''; obRender('back'); return scrollTo(0, 0); }
       case 'newagent': ob = blankOb(); obStep = 0; obErr = ''; LS.set('ph_draft', null); return;

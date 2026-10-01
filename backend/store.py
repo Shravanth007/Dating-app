@@ -1,4 +1,4 @@
-"""The app's memory: every person, agent log and date lives in one JSON file (data/demo.json)."""
+"""The app's memory: every person, agent log and date lives in one JSON file (data/state.json)."""
 import json, threading, time, uuid
 from concurrent.futures import ThreadPoolExecutor
 
