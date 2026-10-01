@@ -97,7 +97,7 @@ input[type=range]{padding:0;border:0;background:none;box-shadow:none;accent-colo
 
 /* ---------- avatars ---------- */
 .av{--s:44px;width:var(--s);height:var(--s);border-radius:50%;flex:none;position:relative;display:inline-grid;place-items:center;overflow:hidden;
-  background:hsl(var(--h) 45% 22%);color:hsl(var(--h) 80% 82%);font-weight:800;font-size:calc(var(--s)*.36);letter-spacing:.02em}
+  background:hsl(var(--h) 45% 22%);color:hsl(var(--h) 80% 82%);font-weight:800;font-size:calc(var(--s)*.36);letter-spacing:.02em;white-space:nowrap;line-height:1}
 .av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .av.xs{--s:26px}.av.sm{--s:34px}.av.lg{--s:64px}.av.xl{--s:96px}.av.xxl{--s:128px}
 .av.ring-acc{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--acc)}
@@ -835,7 +835,9 @@ function load(s) { S = {...s, people: s?.people || {}, dates: s?.dates || {}, ra
 async function refresh() {
   if (busy) return; busy = true;
   try { const t = await fetch('/api/state', {cache: 'no-store'}).then(r => r.text());
-    if (t !== lastJSON) { lastJSON = t; load(JSON.parse(t)); render(); }
+    if (t !== lastJSON) { lastJSON = t; load(JSON.parse(t));
+      if (!S.people[ME] && users().length === 1) setMe(users()[0].id); // only one member here: that's you
+      render(); }
   } catch (e) { /* server restarting; retry next tick */ } finally { busy = false; }
 }
 function toast(msg, bad) { const t = $('#toast'); if (!t) return; t.textContent = msg; t.className = 'on' + (bad ? ' bad' : ''); clearTimeout(t._t); t._t = setTimeout(() => t.className = '', 3400); }
