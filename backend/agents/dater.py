@@ -62,6 +62,29 @@ def run_date(did):
     save()
 
 
+def chat(to_id, from_id, text):
+    """You chat live with a person's agent; it answers as them (persona built only from their LinkedIn + Instagram)."""
+    other, me = state["people"].get(to_id), state["people"].get(from_id)
+    if not (other and other.get("profile")):
+        raise ValueError("That agent is not ready yet")
+    text = (text or "").strip()[:800]
+    if not text:
+        raise ValueError("Type a message first")
+    key = f"{from_id}:{to_id}"
+    with lock:
+        thread = state.setdefault("chats", {}).setdefault(key, [])
+        thread.append({"who": from_id, "text": text})
+    who = f"{me['name']} ({(me.get('profile') or {}).get('headline', '')})" if me else "someone"
+    history = "\n".join(f"{'Them' if m['who'] == from_id else other['name']}: {m['text']}" for m in thread[-20:])
+    reply = ask(persona(other), f"You are chatting live, one-on-one, with {who} on a dating app. Conversation so "
+                f"far:\n{history}\n\nWrite ONLY {other['name']}'s next message (1-3 sentences, natural, in their voice).",
+                max_tokens=1000).strip().strip('"')
+    with lock:
+        thread.append({"who": to_id, "text": reply})
+    save()
+    return reply
+
+
 def start_date(a, b):
     """Create (or reuse) a date between a and b and start it in the background. Returns (date_id, future|None)."""
     with lock:

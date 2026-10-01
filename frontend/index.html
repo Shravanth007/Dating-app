@@ -634,6 +634,17 @@ function phoneDate() {
     : `<a class="phone" href="#d/${enc(d.id)}" aria-label="Open the date">${inner}</a>`;
 }
 
+let chatBusy = '';
+function chatPanel(p) { // talk live with this person's agent; it answers in their persona
+  const me = meP(), thread = (S.chats || {})[`${ME}:${p.id}`] || [];
+  if (!me) return `<div class="card"><h3>Chat with ${esc(first(p))}'s agent</h3><p class="mute">Create your agent first, then you can chat with ${esc(first(p))}'s agent here.</p></div>`;
+  return `<div class="card"><div class="sec-h" style="margin:0 0 10px"><div><h3>Chat with ${esc(first(p))}'s agent</h3><p class="mute small">It answers as ${esc(first(p))}, using only their LinkedIn + Instagram.</p></div></div>
+    <div class="chat autoscroll" style="max-height:420px">${thread.map(m => { const q = m.who === p.id ? p : me; return `<div class="msg ${m.who === p.id ? 'l' : 'r'}">${av(q, 'sm')}<div class="bub"><small>${m.who === p.id ? esc(first(p)) + "'s agent" : 'You'}</small>${esc(m.text).replace(/\*([^*]+)\*/g, '<em>$1</em>')}</div></div>`; }).join('')
+      || `<p class="mute small">Say hi. ${esc(first(p))}'s agent will reply in their voice.</p>`}
+      ${chatBusy === p.id ? `<div class="msg l typing">${av(p, 'sm')}<div class="bub"><i></i><i></i><i></i></div></div>` : ''}</div>
+    <form class="row" data-chat="${esc(p.id)}" style="margin-top:12px;flex-wrap:nowrap"><input name="t" maxlength="800" autocomplete="off" placeholder="Message ${esc(first(p))}'s agent…" style="flex:1" ${chatBusy ? 'disabled' : ''}><button class="primary" ${chatBusy ? 'disabled' : ''}>Send</button></form></div>`;
+}
+
 const views = {
   welcome() { const us = users();
     return B('hero', `<div class="welcome-page"><div class="hero"><div>
@@ -730,6 +741,7 @@ const views = {
       + B('matches', `<div class="card"><div class="sec-h" style="margin:0 0 6px"><div><h3>Who this agent is looking for</h3><p class="mute small">Its search over the pool, best fit first.</p></div>${/search/i.test(p.status || '') ? pill(p.status) : ''}</div>
         ${m.length ? m.map(x => { const q = P(x.id); return `<div class="match"><a class="who" href="#p/${enc(q.id)}">${av(q)}<span style="min-width:0"><b>${esc(nm(q))}</b><br><span class="small mute">${esc(q.profile?.headline || '')}</span></span></a><span></span>${bar(x.fit)}${dateBtn(id, q.id)}<p class="reason">${esc(x.reason)}</p></div>`; }).join('')
           : `<p class="mute">${p.search ? 'Nobody in the pool fits yet.' : 'This agent has not searched yet.'}</p>`}</div>`))
+    + (f && p.kind !== 'user' ? B('livechat', chatPanel(p)) : '')
     + B('src', `<div class="sec-h"><div><h2>What the agent read</h2><p class="mute">Public LinkedIn and Instagram only.</p></div></div>
       <div class="two">${[['linkedin', 'LinkedIn', p.linkedin], ['instagram', 'Instagram', p.instagram]].map(([k, label, url]) => { const s = src[k] || {}, body = tree(s.data);
         return `<div class="card"><div class="row" style="margin-bottom:14px"><span class="srch">${label}</span>${s.via ? `<span class="via">via ${esc(s.via)}</span>` : ''}<span class="grow"></span>
@@ -897,6 +909,11 @@ if (typeof document !== 'undefined' && document.getElementById('app')) {
     const el = e.target; if (el.tagName === 'TEXTAREA' || el.tagName === 'BUTTON' || el.tagName === 'A') return;
     e.preventDefault(); if (el.dataset?.custom) return addCustom(el.dataset.custom);
     OB.length - 1 === obStep ? obSubmit() : obNext(); });
+  document.addEventListener('submit', async e => { const fm = e.target.closest('form[data-chat]'); if (!fm) return;
+    e.preventDefault(); const to = fm.dataset.chat, text = fm.t.value.trim(); if (!text || chatBusy) return;
+    S.chats = S.chats || {}; (S.chats[`${ME}:${to}`] = S.chats[`${ME}:${to}`] || []).push({who: ME, text});
+    chatBusy = to; render(true);
+    await api('/api/chat', {to, from: ME, text}); chatBusy = ''; await refresh(); });
   window.addEventListener('hashchange', () => render());
   render(); refresh(); setInterval(refresh, 1500);
 }

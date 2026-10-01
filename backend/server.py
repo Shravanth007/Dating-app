@@ -8,11 +8,12 @@ POST /api/people/<id>/analyze       re-read the person
 POST /api/people/<id>/search        re-run the person's search
 POST /api/people/<id>/delete
 POST /api/date                      {a, b}                → send two agents on a date
-POST /api/run                       everyone searches, dates and gets ranked"""
+POST /api/run                       everyone searches, dates and gets ranked
+POST /api/chat                      {to, from, text}      → chat live with a person's agent; returns {reply}"""
 import json, re, sys, threading, urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from .agents.dater import run_date, start_date
+from .agents.dater import chat, run_date, start_date
 from .agents.hunter import hunt
 from .agents.matcher import ranking, search
 from .agents.reader import analyze
@@ -132,6 +133,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send(200, {})
             if path == "/api/date":
                 return self.send(200, {"id": start_date(body["a"], body["b"])[0]})
+            if path == "/api/chat":
+                return self.send(200, {"reply": chat(body.get("to"), body.get("from"), body.get("text"))})
             if path == "/api/run":
                 if not state["pipeline"]["running"]:
                     state["pipeline"].update(running=True, step="starting")
