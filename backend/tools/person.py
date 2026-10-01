@@ -1,22 +1,28 @@
 """Tool: read ONE person — their public LinkedIn and their public Instagram together.
 
-Results are cached in memory for the session, so when the hunter has already read someone, that person's own agent
-reads the same data without scraping LinkedIn/Instagram a second time (fewer requests → fewer blocks)."""
-import threading
+Every successful scrape is saved to data/scrape_cache.json, so each profile is fetched from LinkedIn/Instagram only
+once, ever: the hunter's read and that person's own agent share it, and it survives restarts (fewer requests → fewer
+blocks, and no repeated Apify cost)."""
+import json, threading
 
+from ..config import ROOT
 from .instagram import ig_handle, read_instagram
 from .linkedin import li_slug, read_linkedin
 
-_cache, _lock = {}, threading.Lock()
+CACHE_FILE = ROOT / "data" / "scrape_cache.json"
+_lock = threading.Lock()
+_cache = json.loads(CACHE_FILE.read_text("utf8")) if CACHE_FILE.exists() else {}
 
 
 def _cached(key, fn, url):
     with _lock:
         if key in _cache:
             return _cache[key]
-    result = fn(url)  # raises on failure; failures are not cached so a retry can succeed
+    result = fn(url)  # raises on failure; failures are not cached so a later retry can succeed
     with _lock:
         _cache[key] = result
+        CACHE_FILE.parent.mkdir(parents=True, exist_ok=True)
+        CACHE_FILE.write_text(json.dumps(_cache, indent=1, ensure_ascii=False), "utf8")
     return result
 
 

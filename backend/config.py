@@ -2,6 +2,15 @@
 import os
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parent.parent              # the project folder
+
+# Keys can live in a .env file in the project folder (KEY=value per line; git-ignored, never pushed)
+if (ROOT / ".env").exists():
+    for line in (ROOT / ".env").read_text("utf8").splitlines():
+        if "=" in line and not line.strip().startswith("#"):
+            k, v = line.split("=", 1)
+            os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
+
 env = os.environ.get
 
 OPENROUTER_API_KEY = env("OPENROUTER_API_KEY", "")         # required: powers every agent
@@ -12,7 +21,6 @@ FALLBACK_MODELS = [m for m in env("FALLBACK_MODELS", "qwen/qwen3.8-27b:free").sp
 HUNTER_MODEL = env("HUNTER_MODEL", MODEL)                  # the hunt is the longest loop
 PORT = int(env("PORT", 8000))
 
-ROOT = Path(__file__).resolve().parent.parent              # the project folder
 DATA_FILE = Path(env("DATA_FILE", ROOT / "data" / "demo.json"))
 FRONTEND = ROOT / "frontend" / "index.html"
 
