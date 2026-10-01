@@ -3,7 +3,8 @@
 GET  /api/state                     everything the UI shows (people, dates, rankings, pipeline)
 POST /api/onboard                   {answers}             → create a user + their agent
 POST /api/users/<id>/hunt           {count}               → the user's agent hunts the web, dates, ranks
-POST /api/people                    {people:[{linkedin, instagram, li_text?, ig_text?, gender?}]} → add by link
+POST /api/people                    {people:[{linkedin, instagram, li_text?, ig_text?, gender?, match_with?}]} → add by link
+                                    (match_with = a user id: their agents start chatting as soon as the profile is built)
 POST /api/people/<id>/analyze       re-read the person
 POST /api/people/<id>/search        re-run the person's search
 POST /api/people/<id>/delete
@@ -11,7 +12,7 @@ POST /api/date                      {a, b}                → two agents chat, t
 POST /api/run                       everyone searches, dates and gets ranked
 POST /api/chat                      {to, from, text}      → chat live with a person's agent; returns {reply}
 POST /api/dates/<id>/plan           the two agents set up the first date (check availability, agree on a plan)"""
-import json, re, sys, threading, urllib.parse
+import json, re, sys, threading, time, urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from .agents.dater import SLOTS, chat, plan_first_date, run_date, start_date
@@ -39,8 +40,20 @@ def add_by_link(body):
             return p["id"]
     gender = body.get("gender") if body.get("gender") in CHOICES["gender"] else ""
     p = new_person("candidate", li, ig, body.get("li_text", ""), body.get("ig_text", ""), gender=gender)
-    pool.submit(analyze, p["id"])
+    user = state["people"].get(body.get("match_with") or "")
+    pool.submit(read_then_match, p["id"], user["id"] if user and user["kind"] == "user" else None)
     return p["id"]
+
+
+def read_then_match(pid, uid=None):
+    """Build the person's agent; if they were added to be matched with a user, the two agents start chatting at once."""
+    analyze(pid)
+    for _ in range(60):  # the user's own agent may still be getting ready
+        if not uid or (state["people"].get(uid) or {}).get("profile"):
+            break
+        time.sleep(2)
+    if uid and state["people"].get(pid, {}).get("profile") and state["people"][uid].get("profile"):
+        start_date(uid, pid)
 
 
 def onboard(a):
@@ -172,5 +185,7 @@ def main():
         if d["status"] in ("on the date", "debriefing"):
             d["transcript"], d["verdicts"] = [], {}
             pool.submit(run_date, d["id"])
+        elif (d.get("plan") or {}).get("status") == "planning":
+            pool.submit(plan_first_date, d["id"])
     print(f"Proxy Hearts running on http://localhost:{PORT}")
     ThreadingHTTPServer(("0.0.0.0", PORT), Handler).serve_forever()

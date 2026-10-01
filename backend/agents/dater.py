@@ -67,6 +67,8 @@ def run_date(did):
     except Exception as e:
         d["status"] = f"error: {e}"[:300]
     save()
+    if d["status"] == "done" and all(v["wants_to_meet"] for v in d["verdicts"].values()):
+        plan_first_date(did)  # it's a match: the agents go straight on to setting up the first date
 
 
 class Plan(BaseModel):

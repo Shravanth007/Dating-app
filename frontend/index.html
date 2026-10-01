@@ -457,7 +457,7 @@ const findDate = (a, b) => Object.values(S.dates).filter(d => ((d.a === a && d.b
 const liveFirst = ds => ds.slice().reverse().sort((x, y) => (isWork(y.status) ? 1 : 0) - (isWork(x.status) ? 1 : 0));
 const dateBtn = (a, b, id) => { const d = (id && S.dates[id]) || findDate(a, b);
   return d ? `<a class="btn ghost sm" href="#d/${enc(d.id)}">${isWork(d.status) ? '<i class="dot" style="color:var(--acc)"></i>Watch live' : 'Read the date'}</a>`
-    : `<button class="sm" data-act="date" data-a="${esc(a)}" data-b="${esc(b)}">Send on a date</button>`; };
+    : `<button class="sm" data-act="date" data-a="${esc(a)}" data-b="${esc(b)}">Match &amp; start chat</button>`; };
 const B = (k, html, cls = '') => `<section class="blk ${cls}" data-k="${esc(k)}">${html}</section>`;
 const empty = (title, msg, cta = '') => `<div class="card empty"><h3>${title}</h3><p>${msg}</p>${cta}</div>`;
 const loading = () => B('loading', '<div class="card empty"><div class="row" style="justify-content:center;color:var(--mute)"><span class="spin"></span>Loading the pool…</div></div>');
@@ -727,6 +727,7 @@ const views = {
       <label class="f">LinkedIn URL<input id="li" type="url" placeholder="https://www.linkedin.com/in/…" autocomplete="off"></label>
       <label class="f">Instagram URL<input id="ig" type="url" placeholder="https://www.instagram.com/…" autocomplete="off"></label>
       <label class="f">Gender (optional)<select id="gen"><option value="">Not specified</option><option value="man">Man</option><option value="woman">Woman</option></select></label>
+      ${meP() ? `<label class="f" style="display:flex;gap:10px;align-items:center;flex-direction:row"><input type="checkbox" id="mw" checked style="width:auto;margin:0"><span>Match them with me: our agents start chatting as soon as their agent is ready</span></label>` : ''}
       <details><summary>Profile blocked? Paste the text instead</summary>
         <label class="f" style="margin-top:12px">Text from their LinkedIn<textarea id="lit" rows="3" placeholder="Headline, about, experience…"></textarea></label>
         <label class="f">Text from their Instagram<textarea id="igt" rows="3" placeholder="Bio, recent captions…"></textarea></label></details>
@@ -745,7 +746,7 @@ const views = {
         <div class="links">${p.linkedin ? `<a href="${href(p.linkedin)}" target="_blank" rel="noopener">LinkedIn</a>` : ''}${p.instagram ? `<a href="${href(p.instagram)}" target="_blank" rel="noopener">Instagram</a>` : ''}
           ${g ? `<span class="mute">${g}</span>` : ''}${sk ? `<span class="mute">Into ${sk}</span>` : ''}${p.id === ME ? '<span class="tag p">This is you</span>' : ''}</div>
         ${p.found_reason ? `<p style="margin-top:12px;border-left:2px solid var(--amb);padding-left:12px;color:var(--ink2)"><b style="color:var(--amb)">Why ${esc(first(P(p.found_by)))}'s agent picked them:</b> ${esc(p.found_reason)}</p>` : ''}</div>
-      <div class="row"><button class="ghost sm" data-act="analyze" data-id="${esc(id)}">Re-read</button><button class="ghost sm" data-act="search" data-id="${esc(id)}" ${f ? '' : 'disabled'}>Re-search</button>
+      <div class="row">${f && ME && ME !== id && p.kind !== 'user' && meP()?.profile ? dateBtn(ME, id).replace('class="sm"', 'class="primary sm"').replace('class="btn ghost sm"', 'class="btn primary sm"') : ''}<button class="ghost sm" data-act="analyze" data-id="${esc(id)}">Re-read</button><button class="ghost sm" data-act="search" data-id="${esc(id)}" ${f ? '' : 'disabled'}>Re-search</button>
         <a class="btn ghost sm" href="#rank/${enc(id)}">Ranking</a><button class="ghost sm danger" data-act="del" data-id="${esc(id)}" data-name="${esc(nm(p))}">Delete</button></div></div>`)
     + (o ? B('answers', `<div class="card"><h3 style="margin-bottom:16px">In ${esc(first(p))}'s own words</h3>
         ${o.about ? `<p class="quote" style="margin-bottom:18px">“${esc(o.about)}”</p>` : ''}
@@ -913,7 +914,8 @@ if (typeof document !== 'undefined' && document.getElementById('app')) {
       case 'del': if (confirm(`Delete ${a.name} and all their dates?`) && await api(personApi(a.id) + 'delete')) { if (a.id === ME) setMe(''); toast(`Deleted ${a.name}`); location.hash = a.id === ME ? 'welcome' : 'pool'; } break;
       case 'addOne': { const g = k => ($('#' + k)?.value || '').trim();
         if (!/linkedin\.com\//i.test(g('li')) || !/instagram\.com\//i.test(g('ig'))) return toast('Add both a LinkedIn and an Instagram profile URL', true);
-        if (await api('/api/people', {people: [{linkedin: g('li'), instagram: g('ig'), li_text: g('lit'), ig_text: g('igt'), gender: g('gen')}]})) { toast('Added. Their agent is reading their profile.'); location.hash = 'pool'; }
+        const mw = $('#mw')?.checked ? ME : '', r = await api('/api/people', {people: [{linkedin: g('li'), instagram: g('ig'), li_text: g('lit'), ig_text: g('igt'), gender: g('gen'), match_with: mw}]});
+        if (r?.ids?.[0]) { toast(mw ? 'Added. Their agent is reading their profile, then your agents start chatting.' : 'Added. Their agent is reading their profile.'); location.hash = 'p/' + encodeURIComponent(r.ids[0]); }
         break; }
       case 'addBulk': { const ps = ($('#bulk')?.value || '').split('\n').map(l => l.trim().split(/[\s,;]+/).filter(Boolean)).filter(x => x.length >= 2)
           .map(x => ({linkedin: x.find(u => /linkedin\.com/i.test(u)) || x[0], instagram: x.find(u => /instagram\.com/i.test(u)) || x[1], li_text: '', ig_text: '', gender: ''}));

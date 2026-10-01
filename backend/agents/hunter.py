@@ -15,7 +15,7 @@ from ..tools.instagram import ig_handle
 from ..tools.linkedin import li_slug
 from ..tools.person import already_read, read_person
 from ..tools.web_search import web_search
-from .dater import persona, plan_first_date, start_date
+from .dater import persona, start_date
 from .matcher import card, ranking, search
 from .reader import analyze
 
@@ -132,10 +132,9 @@ def hunt(uid, count):
             if d["status"] == "done":
                 v = d["verdicts"]
                 say(f"   {v[uid]['score']}/100 · wants to meet: {'yes' if v[uid]['wants_to_meet'] else 'no'}")
-                if all(x["wants_to_meet"] for x in v.values()):
-                    say(f"📅 Both want to meet: setting up the first date with {state['people'][m['id']]['name']}'s agent…")
-                    plan_first_date(did)
-                    r = d["plan"].get("result") or {}
+                if all(x["wants_to_meet"] for x in v.values()):  # run_date already set up the first date
+                    say(f"📅 It's a match: the agents set up a first date with {state['people'][m['id']]['name']}")
+                    r = (d.get("plan") or {}).get("result") or {}
                     if r.get("agreed"):
                         say(f"🗓️ First date set: {r['day']} {r['date']}, {r['time']} · {r['place']}")
         rows = ranking(uid, state["people"], state["dates"])
